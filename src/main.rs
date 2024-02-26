@@ -5,5 +5,5 @@ fn main() {
     let y = Tensor::new(vec![1, -2, 1]);
     let z = Tensor::new(vec![0, 1, 3]);
     let s = (x.clone() + y.clone()) * z.clone();
-    println!("({:#?} + {:#?}) * {:#?} = {:#?}", x, y, z, s);
+    println!("{:?}", s);
 }
