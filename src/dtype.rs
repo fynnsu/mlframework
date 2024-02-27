@@ -1,13 +1,6 @@
-use std::ops::{Add, Div, Mul, Sub};
+use num::Num;
 
-pub trait Dtype:
-    Copy + Add<Output = Self> + Sub<Output = Self> + Mul<Output = Self> + Div<Output = Self>
-where
-    Self: std::marker::Sized,
-{
-}
+pub trait Dtype: Copy + Num + PartialOrd<Self> {}
+// where Self: std::marker::Sized
 
-impl<T> Dtype for T where
-    T: Copy + Add<Output = T> + Sub<Output = T> + Mul<Output = T> + Div<Output = T>
-{
-}
+impl<T> Dtype for T where T: Copy + Num + PartialOrd<T> {}
