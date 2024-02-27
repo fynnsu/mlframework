@@ -2,7 +2,27 @@ use crate::{dtype::Dtype, tensor::Tensor};
 
 #[derive(Debug, Clone)]
 pub enum Op<T: Dtype> {
-    ElementwisePair(ElementwiseBinary, Tensor<T>, Tensor<T>),
+    EB(ElementwiseBinary, Tensor<T>, Tensor<T>),
+    EU(ElementwiseUnary, Tensor<T>),
+}
+
+#[derive(Debug, Copy, Clone)]
+pub enum ElementwiseUnary {
+    Relu,
+}
+
+impl ElementwiseUnary {
+    pub fn _f<T: Dtype>(self, a: &T) -> T {
+        match self {
+            Self::Relu => {
+                if *a >= T::zero() {
+                    *a
+                } else {
+                    T::zero()
+                }
+            }
+        }
+    }
 }
 
 #[derive(Debug, Copy, Clone)]
