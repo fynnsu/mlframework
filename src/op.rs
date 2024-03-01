@@ -4,11 +4,22 @@ use crate::{dtype::Dtype, tensor::Tensor};
 pub enum Op<T: Dtype> {
     EB(ElementwiseBinary, Tensor<T>, Tensor<T>),
     EU(ElementwiseUnary, Tensor<T>),
+    Sum(Tensor<T>),
 }
 
 #[derive(Debug, Copy, Clone)]
 pub enum ElementwiseUnary {
     Relu,
+}
+
+impl<T: Dtype> Op<T> {
+    pub fn iter(&self) -> impl Iterator<Item = &Tensor<T>> {
+        match self {
+            Op::EB(_, a, b) => vec![a, b].into_iter(),
+            Op::EU(_, a) => vec![a].into_iter(),
+            Op::Sum(a) => vec![a].into_iter(),
+        }
+    }
 }
 
 impl ElementwiseUnary {
