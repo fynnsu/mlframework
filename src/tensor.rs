@@ -10,6 +10,21 @@ use std::{
 use crate::op::{ElementwiseBinary, Op};
 use crate::{dtype::Dtype, op::ElementwiseUnary};
 
+#[derive(Debug)]
+pub struct TensorGraph<'a, T: Dtype> {
+    nodes: HashMap<usize, &'a Tensor<T>>,
+    edges: HashMap<usize, Vec<usize>>,
+}
+
+impl<'a, T: Dtype> TensorGraph<'a, T> {
+    fn new() -> Self {
+        Self {
+            nodes: HashMap::new(),
+            edges: HashMap::new(),
+        }
+    }
+}
+
 struct IdGenerator {
     next_id: usize,
 }
@@ -43,7 +58,7 @@ impl<T: Dtype> Clone for Tensor<T> {
         Self {
             _data: Rc::clone(&self._data),
             _op: self._op.clone(),
-            _id: ID_GEN.lock().unwrap().next().unwrap(),
+            _id: self._id,
         }
     }
 }
@@ -79,7 +94,7 @@ impl<T: Dtype> Tensor<T> {
         let mut grads = HashMap::new();
 
         assert_eq!(self._data.len(), 1);
-        let id_to_tensor_ref = self.id_to_tensor_ref();
+        let id_to_tensor_ref = self.build_graph();
 
         let ordering_map = self.traversal_ordering();
         let mut ordering_vec: Vec<_> = ordering_map.iter().collect();
@@ -87,7 +102,7 @@ impl<T: Dtype> Tensor<T> {
 
         let t_vec: Vec<_> = ordering_vec
             .iter()
-            .map(|v| *id_to_tensor_ref.get(v.0).unwrap())
+            .map(|v| *id_to_tensor_ref.nodes.get(v.0).unwrap())
             .collect();
 
         grads.insert(self._id, vec![T::one()]);
@@ -99,24 +114,32 @@ impl<T: Dtype> Tensor<T> {
         grads
     }
 
-    fn _id_to_tensor_ref_helper<'a>(
-        &'a self,
-        mut hm: HashMap<usize, &'a Self>,
-    ) -> HashMap<usize, &Self> {
-        hm.insert(self._id, &self);
+    fn _build_graph<'a: 'b, 'b>(&'a self, mut graph: TensorGraph<'b, T>) -> TensorGraph<'b, T> {
+        if graph.nodes.contains_key(&self._id) {
+            return graph;
+        }
 
+        graph.nodes.insert(self._id, &self);
         if let Some(box_op) = &self._op {
             for sub_tensor in box_op.as_ref().iter() {
-                hm = sub_tensor._id_to_tensor_ref_helper(hm)
+                graph
+                    .edges
+                    .entry(sub_tensor._id)
+                    .and_modify(|v| {
+                        v.push(self._id);
+                    })
+                    .or_insert(vec![self._id]);
+                graph = sub_tensor._build_graph(graph)
             }
         }
 
-        hm
+        graph
     }
 
-    pub fn id_to_tensor_ref(&self) -> HashMap<usize, &Self> {
-        let hm = HashMap::new();
-        self._id_to_tensor_ref_helper(hm)
+    pub fn build_graph<'a: 'b, 'b>(&'a self) -> TensorGraph<'b, T> {
+        let graph = TensorGraph::new();
+
+        self._build_graph(graph)
     }
 
     // fn _recursive_helper<F, G>(&self, mut f: F, mut args: G) -> (F, G)
