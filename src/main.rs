@@ -5,9 +5,9 @@ fn main() {
     let y = Tensor::new(vec![1, -2, 1]);
     let z = Tensor::new(vec![-3, 1, 3]);
     let s = (x + y) * z.relu();
-    println!("{:?}", s);
-    println!("{:?}", s.traversal_ordering());
-    println!("{:?}", s.id_to_tensor_ref());
+    println!("s = {:?}", s);
+    println!("s.traversal_ordering() {:?}", s.traversal_ordering());
+    println!("s.id_to_tensor_ref() {:?}", s.id_to_tensor_ref());
 
     let id_to_tensor_ref = s.id_to_tensor_ref();
 
@@ -18,6 +18,6 @@ fn main() {
         .iter()
         .map(|v| id_to_tensor_ref.get(v.0))
         .collect();
-    println!("{:?}", ordering_vec);
-    println!("{:?}", t_vec);
+    println!("ordering_vec {:?}", ordering_vec);
+    println!("t_vec {:?}", t_vec);
 }

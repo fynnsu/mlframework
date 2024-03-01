@@ -1,6 +1,6 @@
 use once_cell::sync::Lazy;
 use std::collections::HashMap;
-use std::fmt;
+use std::{fmt, usize};
 use std::{
     ops::{Add, Div, Mul, Sub},
     rc::Rc,
@@ -119,16 +119,32 @@ impl<T: Dtype> Tensor<T> {
         self._id_to_tensor_ref_helper(hm)
     }
 
-    // fn _recursive_helper<F, G, H>(&self, mut f: F, args: G) -> H
+    // fn _recursive_helper<F, G>(&self, mut f: F, mut args: G) -> (F, G)
     // where
-    //     F: FnMut(&Self, G) -> H,
+    //     F: FnMut(&Self, G) -> G,
     // {
-    //     let mut h = f(&self, args);
+    //     args = f(self, args);
     //     if let Some(box_op) = &self._op {
     //         for sub_tensor in box_op.as_ref().iter() {
-    //             h = sub_tensor._traversal_ordering_helper(hm, depth + 1)
+    //             (f, args) = sub_tensor._recursive_helper(f, args);
     //         }
     //     }
+    //     (f, args)
+    // }
+
+    // pub fn traversal_ordering(&self) -> HashMap<usize, usize> {
+    //     let hm = HashMap::new();
+
+    //     let (_, (hm, _)) = self._recursive_helper(
+    //         |s: &Self, (mut hm, d): (HashMap<usize, usize>, usize)| {
+    //             hm.entry(s._id)
+    //                 .and_modify(|v| *v = (*v).max(d))
+    //                 .or_insert(d);
+    //             (hm, d + 1)
+    //         },
+    //         (hm, 0),
+    //     );
+    //     hm
     // }
 
     fn _traversal_ordering_helper(
