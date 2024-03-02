@@ -28,3 +28,4 @@ let grad = s.grad();
     - [ ] Generate similar ops using macros
 - [ ] Setup test structure
 - [ ] Organize repo code
+- [ ] Add CI w/ Github Actions
