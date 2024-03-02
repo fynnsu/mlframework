@@ -1,6 +1,6 @@
-use num::Num;
+use num::Signed;
 
-pub trait Dtype: Copy + Num + PartialOrd<Self> {}
+pub trait Dtype: Copy + Signed + PartialOrd<Self> {}
 // where Self: std::marker::Sized
 
-impl<T> Dtype for T where T: Copy + Num + PartialOrd<T> {}
+impl<T> Dtype for T where T: Copy + Signed + PartialOrd<T> {}

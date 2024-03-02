@@ -12,8 +12,8 @@ use crate::{dtype::Dtype, op::ElementwiseUnary};
 
 #[derive(Debug)]
 pub struct TensorGraph<'a, T: Dtype> {
-    nodes: HashMap<usize, &'a Tensor<T>>,
-    edges: HashMap<usize, Vec<usize>>,
+    pub nodes: HashMap<usize, &'a Tensor<T>>,
+    pub edges: HashMap<usize, Vec<usize>>,
 }
 
 impl<'a, T: Dtype> TensorGraph<'a, T> {
@@ -48,54 +48,52 @@ impl Iterator for IdGenerator {
 static ID_GEN: Lazy<Mutex<IdGenerator>> = Lazy::new(|| Mutex::new(IdGenerator::new()));
 
 pub struct Tensor<T: Dtype> {
-    _data: Rc<Vec<T>>,
+    pub data: Rc<Vec<T>>,
     _op: Option<Box<Op<T>>>,
-    _id: usize,
+    pub id: usize,
 }
 
 impl<T: Dtype> Clone for Tensor<T> {
     fn clone(&self) -> Self {
         Self {
-            _data: Rc::clone(&self._data),
+            data: Rc::clone(&self.data),
             _op: self._op.clone(),
-            _id: self._id,
+            id: self.id,
         }
     }
 }
 
 impl<T: Dtype + fmt::Debug> fmt::Debug for Tensor<T> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "Tensor({:?}, id={})", self._data.as_ref(), self._id)
+        write!(f, "Tensor({:?}, id={})", self.data.as_ref(), self.id)
     }
 }
 
 impl<T: Dtype> Tensor<T> {
     pub fn new(data: Vec<T>) -> Self {
         Self {
-            _data: Rc::new(data),
+            data: Rc::new(data),
             _op: None,
-            _id: ID_GEN.lock().unwrap().next().unwrap(),
+            id: ID_GEN.lock().unwrap().next().unwrap(),
         }
     }
 
     pub fn new_with_op(data: Vec<T>, op: Op<T>) -> Self {
         Self {
-            _data: Rc::new(data),
+            data: Rc::new(data),
             _op: Some(Box::new(op)),
-            _id: ID_GEN.lock().unwrap().next().unwrap(),
+            id: ID_GEN.lock().unwrap().next().unwrap(),
         }
-    }
-
-    fn _propogate_grad(&self, mut grads: HashMap<usize, Vec<T>>) -> HashMap<usize, Vec<T>> {
-        grads
     }
 
     pub fn grad(&self) -> HashMap<usize, Vec<T>> {
         let mut grads = HashMap::new();
 
-        assert_eq!(self._data.len(), 1);
+        assert_eq!(self.data.len(), 1);
         let id_to_tensor_ref = self.build_graph();
 
+        // todo: fix recursion issue
+        // Currently diamond pattern graphs could lead to exponential compute time for traversal ordering
         let ordering_map = self.traversal_ordering();
         let mut ordering_vec: Vec<_> = ordering_map.iter().collect();
         ordering_vec.sort_by(|a, b| a.1.cmp(b.1));
@@ -105,30 +103,32 @@ impl<T: Dtype> Tensor<T> {
             .map(|v| *id_to_tensor_ref.nodes.get(v.0).unwrap())
             .collect();
 
-        grads.insert(self._id, vec![T::one()]);
+        grads.insert(self.id, vec![T::one()]);
 
         for t in t_vec {
-            grads = t._propogate_grad(grads);
+            if let Some(op) = &t._op {
+                grads = op.as_ref().propogate_grad(grads, t.id);
+            }
         }
 
         grads
     }
 
     fn _build_graph<'a: 'b, 'b>(&'a self, mut graph: TensorGraph<'b, T>) -> TensorGraph<'b, T> {
-        if graph.nodes.contains_key(&self._id) {
+        if graph.nodes.contains_key(&self.id) {
             return graph;
         }
 
-        graph.nodes.insert(self._id, &self);
+        graph.nodes.insert(self.id, &self);
         if let Some(box_op) = &self._op {
             for sub_tensor in box_op.as_ref().iter() {
                 graph
                     .edges
-                    .entry(sub_tensor._id)
+                    .entry(sub_tensor.id)
                     .and_modify(|v| {
-                        v.push(self._id);
+                        v.push(self.id);
                     })
-                    .or_insert(vec![self._id]);
+                    .or_insert(vec![self.id]);
                 graph = sub_tensor._build_graph(graph)
             }
         }
@@ -175,7 +175,7 @@ impl<T: Dtype> Tensor<T> {
         mut hm: HashMap<usize, usize>,
         depth: usize,
     ) -> HashMap<usize, usize> {
-        hm.entry(self._id)
+        hm.entry(self.id)
             .and_modify(|v| *v = (*v).max(depth))
             .or_insert(depth);
         if let Some(box_op) = &self._op {
@@ -209,11 +209,11 @@ impl<T: Dtype> Tensor<T> {
     // }
 
     fn elementwise_binary_op(self, eb: ElementwiseBinary, other: Self) -> Self {
-        assert_eq!(self._data.len(), other._data.len());
+        assert_eq!(self.data.len(), other.data.len());
         Self::new_with_op(
-            self._data
+            self.data
                 .iter()
-                .zip(other._data.iter())
+                .zip(other.data.iter())
                 .map(|(a, b)| eb._f(a, b))
                 .collect(),
             Op::EB(eb, self, other),
@@ -222,7 +222,7 @@ impl<T: Dtype> Tensor<T> {
 
     fn elementwise_unary_op(self, eu: ElementwiseUnary) -> Self {
         Self::new_with_op(
-            self._data.iter().map(|a| eu._f(a)).collect(),
+            self.data.iter().map(|a| eu._f(a)).collect(),
             Op::EU(eu, self),
         )
     }
@@ -232,7 +232,7 @@ impl<T: Dtype> Tensor<T> {
     }
 
     pub fn sum(self) -> Self {
-        let s = self._data.iter().fold(T::zero(), |s, x| s + *x);
+        let s = self.data.iter().fold(T::zero(), |s, x| s + *x);
         Self::new_with_op(vec![s], Op::Sum(self))
     }
 }
