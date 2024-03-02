@@ -3,7 +3,7 @@
 Building a rudimentary ml framework from scratch in rust.
 
 > [!NOTE]  
-> This project is a work in progess
+> This project is a work in progess. It is also intended as a learning project to improve my understanding of ML framework implementation details and Rust.
 
 ## Status
 ``` rust
