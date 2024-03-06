@@ -14,6 +14,93 @@ pub struct Tensor<T: Dtype> {
     pub shape: Vec<usize>,
 }
 
+pub trait ToVecAndShape<T> {
+    fn to_vec_and_shape(self) -> (Vec<T>, Vec<usize>);
+}
+
+impl<T: Dtype> ToVecAndShape<T> for Vec<T> {
+    fn to_vec_and_shape(self) -> (Vec<T>, Vec<usize>) {
+        let l = self.len();
+        (self, vec![l])
+    }
+}
+
+impl<T: Dtype, const N: usize> ToVecAndShape<T> for [T; N] {
+    fn to_vec_and_shape(self) -> (Vec<T>, Vec<usize>) {
+        (Vec::from(self), vec![N])
+    }
+}
+
+impl<T: Dtype, const N: usize, const M: usize> ToVecAndShape<T> for [[T; M]; N] {
+    fn to_vec_and_shape(self) -> (Vec<T>, Vec<usize>) {
+        (Vec::from(self.concat()), vec![N, M])
+    }
+}
+
+impl<T: Dtype, const N: usize, const M: usize, const Q: usize> ToVecAndShape<T>
+    for [[[T; Q]; M]; N]
+{
+    fn to_vec_and_shape(self) -> (Vec<T>, Vec<usize>) {
+        (Vec::from(self.concat().concat()), vec![N, M, Q])
+    }
+}
+
+impl<T: Dtype, const N: usize, const M: usize, const Q: usize, const R: usize> ToVecAndShape<T>
+    for [[[[T; R]; Q]; M]; N]
+{
+    fn to_vec_and_shape(self) -> (Vec<T>, Vec<usize>) {
+        (Vec::from(self.concat().concat().concat()), vec![N, M, Q, R])
+    }
+}
+
+impl<T: Dtype> ToVecAndShape<T> for Tensor<T> {
+    fn to_vec_and_shape(self) -> (Vec<T>, Vec<usize>) {
+        (self.data.as_ref().to_owned(), self.shape)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_create_tensor_from_vec() {
+        let t = Tensor::new(vec![0, 0, 1, 2]);
+        assert_eq!(t.shape, vec![4])
+    }
+
+    #[test]
+    fn test_create_tensor_from_tensor() {
+        let t = Tensor::new([[2, 3]; 7]);
+        let t2 = Tensor::new(t.clone());
+        assert_eq!(t.shape, t2.shape);
+    }
+
+    #[test]
+    fn test_create_tensor_from_1d_array() {
+        let t = Tensor::new([2, 9, 8, 7, 8, 2, 3, 0, 0, 0, 1, 2]);
+        assert_eq!(t.shape, vec![12])
+    }
+
+    #[test]
+    fn test_create_tensor_from_2d_array() {
+        let t = Tensor::new([[2, 9, 8, 7], [8, 2, 3, 0], [0, 0, 1, 2]]);
+        assert_eq!(t.shape, vec![3, 4])
+    }
+
+    #[test]
+    fn test_create_tensor_from_3d_array() {
+        let t = Tensor::new([[[2, 9], [8, 7]], [[8, 2], [3, 0]], [[0, 0], [1, 2]]]);
+        assert_eq!(t.shape, vec![3, 2, 2])
+    }
+
+    #[test]
+    fn test_create_tensor_from_4d_array() {
+        let t = Tensor::new([[[[2, 9], [8, 7]], [[8, 2], [3, 0]], [[0, 0], [1, 2]]]]);
+        assert_eq!(t.shape, vec![1, 3, 2, 2])
+    }
+}
+
 impl<T: Dtype> Clone for Tensor<T> {
     fn clone(&self) -> Self {
         Self {
@@ -41,24 +128,24 @@ impl<T: Dtype + fmt::Debug> fmt::Debug for Tensor<T> {
 }
 
 impl<T: Dtype> Tensor<T> {
-    pub fn new(data: Vec<T>) -> Self {
-        let l = data.len();
+    pub fn new(data: impl ToVecAndShape<T>) -> Self {
+        let (v, s) = data.to_vec_and_shape();
         Self {
-            data: Rc::new(data),
+            data: Rc::new(v),
             // _op: None,
             op: None,
             id: generate_id(),
-            shape: vec![l],
+            shape: s,
         }
     }
 
-    pub fn new_with_op(data: Vec<T>, op: Op<T>) -> Self {
-        let l = data.len();
+    pub fn new_with_op(data: impl ToVecAndShape<T>, op: Op<T>) -> Self {
+        let (v, s) = data.to_vec_and_shape();
         Self {
-            data: Rc::new(data),
+            data: Rc::new(v),
             op: Some(Rc::new(op)),
             id: generate_id(),
-            shape: vec![l],
+            shape: s,
         }
     }
 
