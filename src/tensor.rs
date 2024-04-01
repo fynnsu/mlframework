@@ -7,20 +7,8 @@ use crate::dtype::Dtype;
 // use crate::graph::TensorGraph;
 use crate::ops::Op;
 use crate::shape::Shape;
+use crate::tensor_data::TensorData;
 use crate::tensor_id::generate_id;
-use core::fmt::Debug;
-
-#[derive(Debug)]
-pub(crate) struct TensorData<T: Dtype> {
-    pub(crate) value: Vec<T>,
-    pub(crate) grad: Option<Vec<T>>,
-}
-
-impl<T: Dtype> TensorData<T> {
-    pub(crate) fn new(value: Vec<T>) -> Self {
-        Self { value, grad: None }
-    }
-}
 
 pub struct Tensor<T: Dtype, S: Shape> {
     pub(crate) data: Rc<TensorData<T>>,
