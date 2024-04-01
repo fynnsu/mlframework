@@ -7,14 +7,21 @@ use mlframework::{
 };
 
 fn main() {
-    let x: Tensor<f32, (Const<20>, Const<1>)> = Tensor::new([[0.0]; 20]);
-    // let y = Tensor::new(vec![1., -2., 1.]);
-    // let z = Tensor::new(vec![-3., 1., 3.]);
+    let x = Tensor::new([2.0; 3]);
+    let y = Tensor::new([1., -2., 1.]);
 
-    // let s = ((x + y.clone() + y) * z.relu()).reduce_sum();
+    // let z = x + y;
+    // println!("x + y = {:?}", z)
+    let z = Tensor::new(vec![-3., 1., 3.]);
+    let xxy = x + y.clone() + y;
+    println!("xxy = {:?}", xxy);
+    let zrelu = z.relu();
+    println!("zrelu = {:?}", zrelu);
+    let mul = xxy * zrelu;
+    println!("mul = {:?}", mul);
 
-    let x_225: Tensor<f32, (Const<2>, Const<2>, Const<5>)> = x.reshape();
-    let x_20: Tensor<f32, (Const<20>,)> = x_225.reshape();
+    let s = mul.reduce_sum();
+    println!("((x + y + y) * z.relu()).reduce_sum() = {:?}", s)
 
     //0 x = (3, 4, 5)
     //1 y = (1, -2, 1)
