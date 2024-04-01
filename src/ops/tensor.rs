@@ -7,7 +7,7 @@ use crate::{
     dtype::Dtype,
     ops::Op,
     shape::{Const, Shape},
-    tensor::Tensor,
+    tensor::{Tensor, TensorData},
 };
 
 use crate::ops::vec::{el_add, el_div, el_max, el_min, el_mul, el_sub};
@@ -27,8 +27,13 @@ impl<T: Dtype, S: Shape> Op for ElAddStruct<T, S> {
     }
 
     fn forward(self) -> Self::Produces {
-        let data = el_add(&self.0.data, &self.1.data);
-        unsafe { Self::Produces::from_rc_vec_and_op_unchecked(Rc::new(data), Rc::new(self)) }
+        let data = el_add(&self.0.data.value, &self.1.data.value);
+        unsafe {
+            Self::Produces::from_rc_td_and_op_unchecked(
+                Rc::new(TensorData::new(data)),
+                Rc::new(self),
+            )
+        }
     }
 
     fn clone(&self) -> Self
@@ -57,8 +62,8 @@ impl<T: Dtype, S: Shape> Op for ElSubStruct<T, S> {
     }
 
     fn forward(self) -> Self::Produces {
-        let data = el_sub(&self.0.data, &self.1.data);
-        unsafe { Self::Produces::from_rc_vec_and_op_unchecked(Rc::new(data), Rc::new(self)) }
+        let data = TensorData::new(el_sub(&self.0.data.value, &self.1.data.value));
+        unsafe { Self::Produces::from_rc_td_and_op_unchecked(Rc::new(data), Rc::new(self)) }
     }
 
     fn clone(&self) -> Self

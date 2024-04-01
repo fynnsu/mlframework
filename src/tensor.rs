@@ -10,8 +10,20 @@ use crate::shape::Shape;
 use crate::tensor_id::generate_id;
 use core::fmt::Debug;
 
+#[derive(Debug)]
+pub(crate) struct TensorData<T: Dtype> {
+    pub(crate) value: Vec<T>,
+    pub(crate) grad: Option<Vec<T>>,
+}
+
+impl<T: Dtype> TensorData<T> {
+    pub(crate) fn new(value: Vec<T>) -> Self {
+        Self { value, grad: None }
+    }
+}
+
 pub struct Tensor<T: Dtype, S: Shape> {
-    pub data: Rc<Vec<T>>,
+    pub(crate) data: Rc<TensorData<T>>,
     pub op: Option<Rc<dyn Op<Produces = Tensor<T, S>>>>,
     pub id: usize,
     pub(crate) _shape: PhantomData<S>,
@@ -81,14 +93,14 @@ impl<T: Dtype + fmt::Debug, S: Shape + fmt::Debug> fmt::Debug for Tensor<T, S> {
 impl<T: Dtype, S: Shape> Tensor<T, S> {
     pub(crate) unsafe fn from_vec_unchecked(value: Vec<T>) -> Self {
         Self {
-            data: Rc::new(value),
+            data: Rc::new(TensorData::new(value)),
             op: None,
             id: generate_id(),
             _shape: Default::default(),
         }
     }
-    pub(crate) unsafe fn from_rc_vec_and_op_unchecked(
-        value: Rc<Vec<T>>,
+    pub(crate) unsafe fn from_rc_td_and_op_unchecked(
+        value: Rc<TensorData<T>>,
         op: Rc<dyn Op<Produces = Tensor<T, S>>>,
     ) -> Self {
         Self {

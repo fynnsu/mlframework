@@ -45,7 +45,7 @@ where
 
     fn forward(self) -> Tensor<T, (Const<A>,)> {
         unsafe {
-            Self::Produces::from_rc_vec_and_op_unchecked(self.data.data.clone(), Rc::new(self))
+            Self::Produces::from_rc_td_and_op_unchecked(self.data.data.clone(), Rc::new(self))
         }
     }
 }
@@ -112,7 +112,7 @@ where
 
     fn forward(self) -> Self::Produces {
         unsafe {
-            Self::Produces::from_rc_vec_and_op_unchecked(self.data.data.clone(), Rc::new(self))
+            Self::Produces::from_rc_td_and_op_unchecked(self.data.data.clone(), Rc::new(self))
         }
     }
 }
