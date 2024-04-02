@@ -43,7 +43,7 @@ impl<T: Dtype, const D1: usize, const D2: usize> From<[[T; D2]; D1]>
     for Tensor<T, (Const<D1>, Const<D2>)>
 {
     fn from(value: [[T; D2]; D1]) -> Self {
-        unsafe { Self::from_vec_unchecked(value.concat().into()) }
+        unsafe { Self::from_vec_unchecked(value.concat()) }
     }
 }
 
@@ -51,6 +51,6 @@ impl<T: Dtype, const D1: usize, const D2: usize, const D3: usize> From<[[[T; D3]
     for Tensor<T, (Const<D1>, Const<D2>, Const<D3>)>
 {
     fn from(value: [[[T; D3]; D2]; D1]) -> Self {
-        unsafe { Self::from_vec_unchecked(value.concat().concat().into()) }
+        unsafe { Self::from_vec_unchecked(value.concat().concat()) }
     }
 }

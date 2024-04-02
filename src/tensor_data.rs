@@ -24,7 +24,7 @@ impl<T: Dtype> TensorData<T> {
 
     pub(crate) fn update_grad(&self, new_grad: Vec<T>) {
         let t = match self.grad.borrow().as_ref() {
-            Some(g) => el_add(&g, &new_grad),
+            Some(g) => el_add(g, &new_grad),
             None => new_grad,
         };
         *self.grad.borrow_mut() = Some(t);

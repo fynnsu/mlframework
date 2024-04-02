@@ -24,7 +24,7 @@ pub(crate) trait TensorTrait {
 impl<T: Dtype, S: Shape> TensorTrait for Tensor<T, S> {
     fn process_grad(&self) {
         if let Some(op) = self.op.as_ref() {
-            op.propogate_grad(&self);
+            op.propogate_grad(self);
         }
     }
 
@@ -47,7 +47,7 @@ impl<'a> Eq for TensorBox<'a> {}
 
 impl<'a> PartialOrd for TensorBox<'a> {
     fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
-        self.0.partial_cmp(&other.0)
+        Some(self.cmp(other))
     }
 }
 
@@ -97,7 +97,7 @@ impl<T: Dtype, S: Shape> Clone for Tensor<T, S> {
         Self {
             data: Rc::clone(&self.data),
             op: match &self.op {
-                Some(_op) => Some(Rc::clone(&_op)),
+                Some(_op) => Some(Rc::clone(_op)),
                 None => None,
             },
             id: self.id,
