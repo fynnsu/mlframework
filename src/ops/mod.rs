@@ -1,6 +1,6 @@
 mod grad;
 mod tensor;
-mod vec;
+pub(crate) mod vec;
 
 pub trait Op: std::fmt::Debug {
     type Produces;
