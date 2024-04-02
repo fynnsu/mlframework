@@ -1,6 +1,5 @@
 #![feature(generic_const_exprs)]
 mod dtype;
-mod graph;
 pub mod ops;
 pub mod reshape;
 pub mod shape;

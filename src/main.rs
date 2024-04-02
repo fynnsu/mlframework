@@ -1,9 +1,5 @@
 #![feature(generic_const_exprs)]
-use mlframework::{
-    reshape::{Flattens, Reshapes},
-    shape::{Const, D1, D2, D3},
-    tensor::Tensor,
-};
+use mlframework::tensor::Tensor;
 
 fn main() {
     let x = Tensor::new([2.0; 3]);

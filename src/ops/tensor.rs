@@ -151,7 +151,6 @@ impl<T: Dtype, S: Shape> Op for ReduceSumStruct<T, S> {
             panic!("Attempted to propogate grad, but no grad value exists.")
         }
     }
-    // let data = $f(&self.0.data, &self.1.data).into();
 
     fn forward(self) -> Self::Produces {
         let data = vec![(self.0.data.iter().fold(T::zero(), |s, x| s + *x))].into();

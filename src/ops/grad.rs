@@ -62,12 +62,12 @@ pub(crate) fn el_min_grad<'a, T: Dtype>(
     (dt_da, dt_db)
 }
 
-pub(crate) fn reduce_sum_grad<'a, T: Dtype>(a: &'a Vec<T>) -> (Cow<'a, Vec<T>>) {
+pub(crate) fn reduce_sum_grad<'a, T: Dtype>(a: &'a Vec<T>) -> Cow<'a, Vec<T>> {
     // t = sum(a)
     Cow::Owned(ones_like(a))
 }
 
-pub(crate) fn el_relu_grad<'a, T: Dtype>(a: &'a Vec<T>) -> (Cow<'a, Vec<T>>) {
+pub(crate) fn el_relu_grad<'a, T: Dtype>(a: &'a Vec<T>) -> Cow<'a, Vec<T>> {
     // t = relu(a)
     Cow::Owned(el_pos(a))
 }

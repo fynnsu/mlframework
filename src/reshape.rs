@@ -32,7 +32,7 @@ where
 {
     type Produces = Tensor<T, (Const<A>,)>;
 
-    fn propogate_grad(&self, t: &Self::Produces) {
+    fn propogate_grad(&self, _t: &Self::Produces) {
         // Flatten does not change data, therefore no grad propogation occurs
     }
 
@@ -96,7 +96,7 @@ where
 {
     type Produces = Tensor<T, S>;
 
-    fn propogate_grad(&self, t: &Self::Produces) {
+    fn propogate_grad(&self, _t: &Self::Produces) {
         // Reshape does not change data, therefore no grad propogation occurs
     }
 

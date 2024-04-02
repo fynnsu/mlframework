@@ -1,4 +1,4 @@
-use std::collections::{BinaryHeap, HashMap};
+use std::collections::BinaryHeap;
 use std::marker::PhantomData;
 use std::rc::Rc;
 use std::{fmt, usize};
@@ -65,7 +65,7 @@ mod tests {
 
     #[test]
     fn test_create_tensor_from_vec() {
-        let t: Tensor<i32, (Const<4>,)> = Tensor::new(vec![0, 0, 1, 2]);
+        let _t: Tensor<i32, (Const<4>,)> = Tensor::new(vec![0, 0, 1, 2]);
     }
 
     #[test]
@@ -77,17 +77,17 @@ mod tests {
 
     #[test]
     fn test_create_tensor_from_1d_array() {
-        let t = Tensor::new([2, 9, 8, 7, 8, 2, 3, 0, 0, 0, 1, 2]);
+        let _t = Tensor::new([2, 9, 8, 7, 8, 2, 3, 0, 0, 0, 1, 2]);
     }
 
     #[test]
     fn test_create_tensor_from_2d_array() {
-        let t = Tensor::new([[2, 9, 8, 7], [8, 2, 3, 0], [0, 0, 1, 2]]);
+        let _t = Tensor::new([[2, 9, 8, 7], [8, 2, 3, 0], [0, 0, 1, 2]]);
     }
 
     #[test]
     fn test_create_tensor_from_3d_array() {
-        let t = Tensor::new([[[2, 9], [8, 7]], [[8, 2], [3, 0]], [[0, 0], [1, 2]]]);
+        let _t = Tensor::new([[[2, 9], [8, 7]], [[8, 2], [3, 0]], [[0, 0], [1, 2]]]);
         //todo: Test these values better
     }
 }
