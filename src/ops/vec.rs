@@ -54,9 +54,9 @@ pub(crate) fn el_lt<T: Dtype>(a: &[T], b: &[T]) -> Vec<T> {
     el_bin(|(x, y)| if *x <= *y { T::one() } else { T::zero() }, a, b)
 }
 
-pub(crate) fn el_unary<T: Dtype, F>(op: F, a: &[T]) -> Vec<T>
+pub(crate) fn el_unary<T1, T2, F>(op: F, a: &[T1]) -> Vec<T2>
 where
-    F: Fn(&T) -> T,
+    F: Fn(&T1) -> T2,
 {
     a.iter().map(op).collect()
 }

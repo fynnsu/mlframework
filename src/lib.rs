@@ -1,4 +1,5 @@
 #![feature(generic_const_exprs)]
+pub mod change_dtype;
 mod dtype;
 pub mod ops;
 pub mod reshape;

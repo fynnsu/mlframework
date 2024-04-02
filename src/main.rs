@@ -1,5 +1,5 @@
 #![feature(generic_const_exprs)]
-use mlframework::tensor::Tensor;
+use mlframework::{change_dtype::Converts, tensor::Tensor};
 
 fn main() {
     let x = Tensor::new([2.0; 3]);
@@ -22,6 +22,10 @@ fn main() {
     s.backward();
 
     println!("\n x_cloned = {:?}", x_cloned);
+
+    let s: Tensor<f64, _> = Tensor::new([2.0; 3]);
+    let s2: Tensor<i32, _> = s.convert();
+    println!("{:?}", s2)
 
     //0 x = (3, 4, 5)
     //1 y = (1, -2, 1)
