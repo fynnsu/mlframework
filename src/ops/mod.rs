@@ -2,10 +2,13 @@ mod grad;
 mod tensor;
 pub(crate) mod vec;
 
-pub trait Op: std::fmt::Debug {
+use crate::tensor::TensorBox;
+
+pub(crate) trait Op: std::fmt::Debug {
     type Produces;
     fn propogate_grad(&self, t: &Self::Produces);
     fn forward(self) -> Self::Produces;
+    fn operands(&self) -> Vec<TensorBox>;
 }
 
 // use std::collections::HashMap;

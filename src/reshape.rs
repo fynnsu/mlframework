@@ -4,7 +4,7 @@ use crate::{
     dtype::Dtype,
     ops::Op,
     shape::{Const, Shape},
-    tensor::Tensor,
+    tensor::{Tensor, TensorBox},
 };
 
 pub trait Flattens<T: Dtype, const A: usize> {
@@ -40,6 +40,10 @@ where
         unsafe {
             Self::Produces::from_rc_td_and_op_unchecked(self.data.data.clone(), Rc::new(self))
         }
+    }
+
+    fn operands(&self) -> Vec<TensorBox> {
+        vec![TensorBox(self.data.id, &self.data)]
     }
 }
 
@@ -100,6 +104,10 @@ where
         unsafe {
             Self::Produces::from_rc_td_and_op_unchecked(self.data.data.clone(), Rc::new(self))
         }
+    }
+
+    fn operands(&self) -> Vec<TensorBox> {
+        vec![TensorBox(self.data.id, &self.data)]
     }
 }
 

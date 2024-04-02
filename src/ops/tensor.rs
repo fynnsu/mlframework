@@ -2,6 +2,7 @@ use crate::ops::grad::{
     el_add_grad, el_div_grad, el_max_grad, el_min_grad, el_mul_grad, el_relu_grad, el_sub_grad,
 };
 use crate::ops::vec::{el_add, el_div, el_max, el_min, el_mul, el_relu, el_sub};
+use crate::tensor::TensorBox;
 use crate::{
     dtype::Dtype,
     ops::Op,
@@ -38,6 +39,10 @@ macro_rules! impl_bin_el_op {
             fn forward(self) -> Self::Produces {
                 let data = $f(&self.0.data, &self.1.data).into();
                 unsafe { Self::Produces::from_rc_td_and_op_unchecked(Rc::new(data), Rc::new(self)) }
+            }
+
+            fn operands(&self) -> Vec<TensorBox> {
+                vec![TensorBox(self.0.id, &self.0), TensorBox(self.1.id, &self.1)]
             }
         }
 
@@ -115,6 +120,10 @@ impl<T: Dtype, S: Shape> Op for ElReLUStruct<T, S> {
         let data = el_relu(&self.0.data).into();
         unsafe { Self::Produces::from_rc_td_and_op_unchecked(Rc::new(data), Rc::new(self)) }
     }
+
+    fn operands(&self) -> Vec<TensorBox> {
+        vec![TensorBox(self.0.id, &self.0)]
+    }
 }
 
 impl<T: Dtype, S: Shape> Tensor<T, S> {
@@ -147,5 +156,9 @@ impl<T: Dtype, S: Shape> Op for ReduceSumStruct<T, S> {
     fn forward(self) -> Self::Produces {
         let data = vec![(self.0.data.iter().fold(T::zero(), |s, x| s + *x))].into();
         unsafe { Self::Produces::from_rc_td_and_op_unchecked(Rc::new(data), Rc::new(self)) }
+    }
+
+    fn operands(&self) -> Vec<TensorBox> {
+        vec![TensorBox(self.0.id, &self.0)]
     }
 }
