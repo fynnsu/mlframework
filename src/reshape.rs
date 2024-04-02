@@ -36,13 +36,6 @@ where
         todo!()
     }
 
-    fn clone(&self) -> Self
-    where
-        Self: Sized,
-    {
-        todo!()
-    }
-
     fn forward(self) -> Tensor<T, (Const<A>,)> {
         unsafe {
             Self::Produces::from_rc_td_and_op_unchecked(self.data.data.clone(), Rc::new(self))
@@ -100,13 +93,6 @@ where
     type Produces = Tensor<T, S>;
 
     fn propogate_grad(&self, t: &Self::Produces) {
-        todo!()
-    }
-
-    fn clone(&self) -> Self
-    where
-        Self: Sized,
-    {
         todo!()
     }
 

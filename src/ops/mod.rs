@@ -6,9 +6,6 @@ pub trait Op: std::fmt::Debug {
     type Produces;
     fn propogate_grad(&self, t: &Self::Produces);
     fn forward(self) -> Self::Produces;
-    fn clone(&self) -> Self
-    where
-        Self: Sized;
 }
 
 // use std::collections::HashMap;

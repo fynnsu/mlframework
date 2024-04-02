@@ -28,13 +28,6 @@ macro_rules! impl_bin_el_op {
                 let data = $f(&self.0.data, &self.1.data).into();
                 unsafe { Self::Produces::from_rc_td_and_op_unchecked(Rc::new(data), Rc::new(self)) }
             }
-
-            fn clone(&self) -> Self
-            where
-                Self: Sized,
-            {
-                todo!()
-            }
         }
 
         impl<T: Dtype, S: Shape> $t for Tensor<T, S> {
@@ -95,21 +88,12 @@ pub trait Min<Rhs = Self> {
 impl<T: Dtype, S: Shape> Op for ElReLUStruct<T, S> {
     type Produces = Tensor<T, S>;
 
-    fn propogate_grad(&self, t: &Self::Produces) {
-        todo!()
-    }
+    fn propogate_grad(&self, t: &Self::Produces) {}
     // let data = $f(&self.0.data, &self.1.data).into();
 
     fn forward(self) -> Self::Produces {
         let data = el_relu(&self.0.data).into();
         unsafe { Self::Produces::from_rc_td_and_op_unchecked(Rc::new(data), Rc::new(self)) }
-    }
-
-    fn clone(&self) -> Self
-    where
-        Self: Sized,
-    {
-        todo!()
     }
 }
 
@@ -135,12 +119,5 @@ impl<T: Dtype, S: Shape> Op for ReduceSumStruct<T, S> {
     fn forward(self) -> Self::Produces {
         let data = vec![(self.0.data.iter().fold(T::zero(), |s, x| s + *x))].into();
         unsafe { Self::Produces::from_rc_td_and_op_unchecked(Rc::new(data), Rc::new(self)) }
-    }
-
-    fn clone(&self) -> Self
-    where
-        Self: Sized,
-    {
-        todo!()
     }
 }
