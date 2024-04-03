@@ -42,7 +42,10 @@ macro_rules! impl_bin_el_op {
             }
 
             fn operands(&self) -> Vec<TensorBox> {
-                vec![TensorBox(self.0.id, &self.0), TensorBox(self.1.id, &self.1)]
+                vec![
+                    TensorBox::new(self.0.id, &self.0),
+                    TensorBox::new(self.1.id, &self.1),
+                ]
             }
         }
 
@@ -122,7 +125,7 @@ impl<T: Dtype, S: Shape> Op for ElReLUStruct<T, S> {
     }
 
     fn operands(&self) -> Vec<TensorBox> {
-        vec![TensorBox(self.0.id, &self.0)]
+        vec![TensorBox::new(self.0.id, &self.0)]
     }
 }
 
@@ -158,6 +161,6 @@ impl<T: Dtype, S: Shape> Op for ReduceSumStruct<T, S> {
     }
 
     fn operands(&self) -> Vec<TensorBox> {
-        vec![TensorBox(self.0.id, &self.0)]
+        vec![TensorBox::new(self.0.id, &self.0)]
     }
 }

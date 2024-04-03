@@ -43,7 +43,7 @@ where
     }
 
     fn operands(&self) -> Vec<TensorBox> {
-        vec![TensorBox(self.data.id, &self.data)]
+        vec![TensorBox::new(self.data.id, &self.data)]
     }
 }
 
@@ -107,7 +107,7 @@ where
     }
 
     fn operands(&self) -> Vec<TensorBox> {
-        vec![TensorBox(self.data.id, &self.data)]
+        vec![TensorBox::new(self.data.id, &self.data)]
     }
 }
 

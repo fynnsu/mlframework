@@ -1,4 +1,5 @@
-use std::collections::BinaryHeap;
+use std::collections::{BinaryHeap, HashSet};
+use std::hash::{Hash, Hasher};
 use std::marker::PhantomData;
 use std::rc::Rc;
 use std::{fmt, usize};
@@ -36,11 +37,20 @@ impl<T: Dtype, S: Shape> TensorTrait for Tensor<T, S> {
     }
 }
 
-pub(crate) struct TensorBox<'a>(pub(crate) usize, pub(crate) &'a dyn TensorTrait);
+pub(crate) struct TensorBox<'a> {
+    pub(crate) id: usize,
+    pub(crate) tensor: &'a dyn TensorTrait,
+}
+
+impl<'a> TensorBox<'a> {
+    pub(crate) fn new(id: usize, tensor: &'a dyn TensorTrait) -> Self {
+        Self { id, tensor }
+    }
+}
 
 impl<'a> PartialEq for TensorBox<'a> {
     fn eq(&self, other: &Self) -> bool {
-        self.0 == other.0
+        self.id == other.id
     }
 }
 impl<'a> Eq for TensorBox<'a> {}
@@ -53,7 +63,12 @@ impl<'a> PartialOrd for TensorBox<'a> {
 
 impl<'a> Ord for TensorBox<'a> {
     fn cmp(&self, other: &Self) -> std::cmp::Ordering {
-        self.0.cmp(&other.0)
+        self.id.cmp(&other.id)
+    }
+}
+impl<'a> Hash for TensorBox<'a> {
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        self.id.hash(state);
     }
 }
 
@@ -158,12 +173,17 @@ impl<T: Dtype> Tensor<T, (Const<1>,)> {
     pub fn backward(&self) {
         self.data.update_grad(vec![T::one()]);
         let mut heap = BinaryHeap::new();
-        let b = TensorBox(self.id, self);
+        let mut set = HashSet::new();
+        let b = TensorBox::new(self.id, self);
+        set.insert(b.id);
         heap.push(b);
-        while let Some(TensorBox(_, t)) = heap.pop() {
+        while let Some(TensorBox { id: _, tensor: t }) = heap.pop() {
             t.process_grad();
             for parent in t.parents() {
-                heap.push(parent);
+                if !set.contains(&parent.id) {
+                    set.insert(parent.id);
+                    heap.push(parent);
+                }
             }
         }
     }
