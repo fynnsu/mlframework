@@ -171,8 +171,20 @@ impl<T: Dtype, S: Shape> Tensor<T, S> {
         self.data.update_grad(new_grad);
     }
 
-    fn apply_grad(&mut self, optim: &dyn Optimizer) {
-        // let t_data = self.data
+    fn apply_grad<Opt: Optimizer>(&mut self, optim: &mut Opt) {
+        let new_value = {
+            let t_grad = self.borrow_grad();
+            if let Some(t_grad) = t_grad.as_ref() {
+                let t_value = self.borrow_value();
+                Some(optim.compute(self.id, &t_value, t_grad))
+            } else {
+                None
+            }
+        };
+        if let Some(new_value) = new_value {
+            // Broken up like this to ensure the borrows above are out of scope before replace is called
+            self.data.replace(new_value);
+        }
     }
 
     pub(crate) fn new_with_op(

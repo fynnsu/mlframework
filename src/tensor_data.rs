@@ -1,3 +1,4 @@
+use std::borrow::BorrowMut;
 use std::cell::{Ref, RefCell};
 use std::ops::Deref;
 
@@ -20,6 +21,12 @@ impl<T: Dtype> TensorData<T> {
         Self {
             inner: RefCell::new(TensorDataInner { value, grad: None }),
         }
+    }
+
+    pub(crate) fn replace(&self, value: Vec<T>) {
+        let mut inner = self.inner.borrow_mut();
+        inner.value = value;
+        inner.grad = None;
     }
 
     pub(crate) fn grad_ref(&self) -> Ref<Option<Vec<T>>> {
