@@ -25,11 +25,12 @@ macro_rules! impl_bin_el_op {
             fn propogate_grad(&self, t: &Self::Produces) {
                 // t = f(a, b)
                 if let Some(d_dt) = t.data.grad_ref().as_ref() {
-                    let a = self.0.borrow_value();
-                    let b = self.0.borrow_value();
-                    let (dt_da, dt_db) = $df(&a, &b);
-                    let d_da = el_mul(d_dt, &dt_da);
-                    let d_db = el_mul(d_dt, &dt_db);
+                    let (d_da, d_db) = {
+                        let a = self.0.borrow_value();
+                        let b = self.0.borrow_value();
+                        let (dt_da, dt_db) = $df(&a, &b);
+                        (el_mul(d_dt, &dt_da), el_mul(d_dt, &dt_db))
+                    };
                     self.0.update_grad(d_da);
                     self.1.update_grad(d_db);
                 } else {
@@ -113,9 +114,11 @@ impl<T: Dtype, S: Shape> Op for ElReLUStruct<T, S> {
         // t = max(a, 0)
         // dt_da = 1 if a > 0 else 0
         if let Some(d_dt) = t.data.grad_ref().as_ref() {
-            let a = self.0.borrow_value();
-            let dt_da = el_relu_grad(&a);
-            let d_da = el_mul(d_dt, &dt_da);
+            let d_da = {
+                let a = self.0.borrow_value();
+                let dt_da = el_relu_grad(&a);
+                el_mul(d_dt, &dt_da)
+            };
             self.0.update_grad(d_da);
         } else {
             panic!("Attempted to propogate grad, but no grad value exists.")
@@ -149,10 +152,12 @@ impl<T: Dtype, S: Shape> Op for ReduceSumStruct<T, S> {
     fn propogate_grad(&self, t: &Self::Produces) {
         // t = reduce_sum(a)
         if let Some(d_dt) = t.data.grad_ref().as_ref() {
-            let a = self.0.borrow_value();
-            let dt_da = reduce_sum_grad(&a);
-            let d_dt_expanded = expand_to_shape(d_dt, dt_da.len());
-            let d_da = el_mul(&d_dt_expanded, &dt_da);
+            let d_da = {
+                let a = self.0.borrow_value();
+                let dt_da = reduce_sum_grad(&a);
+                let d_dt_expanded = expand_to_shape(d_dt, dt_da.len());
+                el_mul(&d_dt_expanded, &dt_da)
+            };
             self.0.update_grad(d_da);
         } else {
             panic!("Attempted to propogate grad, but no grad value exists.")
