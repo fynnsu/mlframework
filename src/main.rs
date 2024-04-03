@@ -1,13 +1,21 @@
 #![feature(generic_const_exprs)]
-use mlframework::{change_dtype::Converts, tensor::Tensor};
+use mlframework::{
+    change_dtype::Converts,
+    reshape::Reshapes,
+    shape::{D1, D3},
+    tensor::Tensor,
+};
+
+fn _shapes() {
+    let _x = Tensor::new([[4; 6]; 8]);
+    let _x: Tensor<_, D1<48>> = _x.reshape();
+    let _x: Tensor<_, D3<2, 2, 12>> = _x.reshape();
+}
 
 fn main() {
     let x = Tensor::new([2.0; 3]);
     let x_cloned = x.clone();
     let y = Tensor::new([1., -2., 1.]);
-
-    // let z = x + y;
-    // println!("x + y = {:?}", z)
     let z = Tensor::new(vec![-3., 1., 3.]);
     let xxy = x + y.clone() + y;
     println!("xxy = {:?}", xxy);
