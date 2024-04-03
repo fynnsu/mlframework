@@ -25,11 +25,13 @@ macro_rules! impl_bin_el_op {
             fn propogate_grad(&self, t: &Self::Produces) {
                 // t = f(a, b)
                 if let Some(d_dt) = t.data.grad_ref().as_ref() {
-                    let (dt_da, dt_db) = $df(self.0.data.as_ref(), self.1.data.as_ref());
+                    let a = self.0.borrow_value();
+                    let b = self.0.borrow_value();
+                    let (dt_da, dt_db) = $df(&a, &b);
                     let d_da = el_mul(d_dt, &dt_da);
                     let d_db = el_mul(d_dt, &dt_db);
-                    self.0.data.update_grad(d_da);
-                    self.1.data.update_grad(d_db);
+                    self.0.update_grad(d_da);
+                    self.1.update_grad(d_db);
                 } else {
                     panic!("Attempted to propogate grad, but no grad value exists.")
                 }
@@ -37,7 +39,7 @@ macro_rules! impl_bin_el_op {
             // let data = $f(&self.0.data, &self.1.data).into();
 
             fn forward(self) -> Self::Produces {
-                let data = $f(&self.0.data, &self.1.data).into();
+                let data = $f(&self.0.borrow_value(), &self.1.borrow_value()).into();
                 unsafe { Self::Produces::from_rc_td_and_op_unchecked(Rc::new(data), Rc::new(self)) }
             }
 
@@ -111,16 +113,17 @@ impl<T: Dtype, S: Shape> Op for ElReLUStruct<T, S> {
         // t = max(a, 0)
         // dt_da = 1 if a > 0 else 0
         if let Some(d_dt) = t.data.grad_ref().as_ref() {
-            let dt_da = el_relu_grad(self.0.data.as_ref());
+            let a = self.0.borrow_value();
+            let dt_da = el_relu_grad(&a);
             let d_da = el_mul(d_dt, &dt_da);
-            self.0.data.update_grad(d_da);
+            self.0.update_grad(d_da);
         } else {
             panic!("Attempted to propogate grad, but no grad value exists.")
         }
     }
 
     fn forward(self) -> Self::Produces {
-        let data = el_relu(&self.0.data).into();
+        let data = el_relu(&self.0.borrow_value()).into();
         unsafe { Self::Produces::from_rc_td_and_op_unchecked(Rc::new(data), Rc::new(self)) }
     }
 
@@ -146,17 +149,18 @@ impl<T: Dtype, S: Shape> Op for ReduceSumStruct<T, S> {
     fn propogate_grad(&self, t: &Self::Produces) {
         // t = reduce_sum(a)
         if let Some(d_dt) = t.data.grad_ref().as_ref() {
-            let dt_da = reduce_sum_grad(self.0.data.as_ref());
+            let a = self.0.borrow_value();
+            let dt_da = reduce_sum_grad(&a);
             let d_dt_expanded = expand_to_shape(d_dt, dt_da.len());
             let d_da = el_mul(&d_dt_expanded, &dt_da);
-            self.0.data.update_grad(d_da);
+            self.0.update_grad(d_da);
         } else {
             panic!("Attempted to propogate grad, but no grad value exists.")
         }
     }
 
     fn forward(self) -> Self::Produces {
-        let data = vec![(self.0.data.iter().fold(T::zero(), |s, x| s + *x))].into();
+        let data = vec![(self.0.borrow_value().iter().fold(T::zero(), |s, x| s + *x))].into();
         unsafe { Self::Produces::from_rc_td_and_op_unchecked(Rc::new(data), Rc::new(self)) }
     }
 

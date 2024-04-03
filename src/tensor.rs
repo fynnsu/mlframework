@@ -1,3 +1,4 @@
+use std::cell::Ref;
 use std::collections::{BinaryHeap, HashSet};
 use std::hash::{Hash, Hasher};
 use std::marker::PhantomData;
@@ -7,6 +8,7 @@ use std::{fmt, usize};
 use crate::dtype::Dtype;
 // use crate::graph::TensorGraph;
 use crate::ops::Op;
+use crate::optim::Optimizer;
 use crate::shape::{Const, Shape};
 use crate::tensor_data::TensorData;
 use crate::tensor_id::generate_id;
@@ -157,6 +159,22 @@ impl<T: Dtype, S: Shape> Tensor<T, S> {
         data.into()
     }
 
+    pub(crate) fn borrow_value(&self) -> Ref<Vec<T>> {
+        self.data.value_ref()
+    }
+
+    pub(crate) fn borrow_grad(&self) -> Ref<Option<Vec<T>>> {
+        self.data.grad_ref()
+    }
+
+    pub(crate) fn update_grad(&self, new_grad: Vec<T>) {
+        self.data.update_grad(new_grad);
+    }
+
+    fn apply_grad(&mut self, optim: &dyn Optimizer) {
+        // let t_data = self.data
+    }
+
     pub(crate) fn new_with_op(
         data: impl Into<Tensor<T, S>>,
         op: Rc<dyn Op<Produces = Tensor<T, S>>>,
@@ -171,7 +189,7 @@ impl<T: Dtype, S: Shape> Tensor<T, S> {
 
 impl<T: Dtype> Tensor<T, (Const<1>,)> {
     pub fn backward(&self) {
-        self.data.update_grad(vec![T::one()]);
+        self.update_grad(vec![T::one()]);
         let mut heap = BinaryHeap::new();
         let mut set = HashSet::new();
         let b = TensorBox::new(self.id, self);

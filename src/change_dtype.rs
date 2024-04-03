@@ -42,14 +42,14 @@ where
         // t = change_dtype(a)
         if let Some(d_dt) = t.data.grad_ref().as_ref() {
             let d_da: Vec<OT> = el_unary(|v| NumCast::from(*v).unwrap(), d_dt);
-            self.data.data.update_grad(d_da);
+            self.data.update_grad(d_da);
         } else {
             panic!("Attempted to propogate grad, but no grad value exists.")
         }
     }
 
     fn forward(self) -> Tensor<T, S> {
-        let data = el_unary(|v| NumCast::from(*v).unwrap(), &self.data.data).into();
+        let data = el_unary(|v| NumCast::from(*v).unwrap(), &self.data.borrow_value()).into();
         unsafe { Self::Produces::from_rc_td_and_op_unchecked(Rc::new(data), Rc::new(self)) }
     }
 
