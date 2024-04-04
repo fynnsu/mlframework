@@ -4,7 +4,7 @@ use mlframework::{
     change_dtype::Converts,
     reshape::Reshapes,
     shape::{D1, D2, D3},
-    tensor::Tensor,
+    tensor::{remove_inputs, Tensor},
 };
 
 fn shapes() {
@@ -15,6 +15,25 @@ fn shapes() {
     let y = Tensor::new([[1; 7]; 4]);
     let m = x.matmul(y);
     println!("m = {:?}", m);
+}
+
+fn prepare_for_training() {
+    let x = Tensor::new([[1.0; 3]; 4]);
+    let y = Tensor::new([[3.0; 7]; 4]);
+    let in_ids = [x.id, y.id];
+
+    let w = Tensor::new([[0.0; 7]; 3]);
+    let y_hat = x.matmul(w);
+    let diff = y - y_hat;
+    let loss = (diff.clone() * diff.clone()).reduce_sum();
+
+    let mut parameters = loss.leaves();
+    remove_inputs(&mut parameters, &in_ids);
+    loss.backward();
+
+    for p in parameters {
+        println!("Param({:?}, grad={})", p, p.tensor.grad_to_string());
+    }
 }
 
 fn main() {
@@ -40,6 +59,8 @@ fn main() {
     let s2: Tensor<i32, _> = s.convert();
     println!("{:?}", s2);
     shapes();
+
+    prepare_for_training();
 
     //0 x = (3, 4, 5)
     //1 y = (1, -2, 1)

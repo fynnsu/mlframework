@@ -1,5 +1,6 @@
 use std::cell::Ref;
 use std::collections::{BinaryHeap, HashSet};
+use std::fmt::Debug;
 use std::hash::{Hash, Hasher};
 use std::marker::PhantomData;
 use std::rc::Rc;
@@ -20,9 +21,10 @@ pub struct Tensor<T: Dtype, S: Shape> {
     pub(crate) _shape: PhantomData<S>,
 }
 
-pub(crate) trait TensorTrait {
+pub trait TensorTrait: Debug {
     fn process_grad(&self);
     fn parents(&self) -> Vec<TensorBox>;
+    fn grad_to_string(&self) -> String;
 }
 impl<T: Dtype, S: Shape> TensorTrait for Tensor<T, S> {
     fn process_grad(&self) {
@@ -37,11 +39,16 @@ impl<T: Dtype, S: Shape> TensorTrait for Tensor<T, S> {
             None => vec![],
         }
     }
+
+    fn grad_to_string(&self) -> String {
+        format!("{:?}", self.borrow_grad())
+    }
 }
 
-pub(crate) struct TensorBox<'a> {
+#[derive(Debug)]
+pub struct TensorBox<'a> {
     pub(crate) id: usize,
-    pub(crate) tensor: &'a dyn TensorTrait,
+    pub tensor: &'a dyn TensorTrait,
 }
 
 impl<'a> TensorBox<'a> {
@@ -189,6 +196,26 @@ impl<T: Dtype, S: Shape> Tensor<T, S> {
         self.data.update_grad(new_grad);
     }
 
+    pub(crate) fn ancestors(&self) -> HashSet<TensorBox> {
+        let mut visited_set = HashSet::new();
+        let mut to_visit = vec![TensorBox::new(self.id, self)];
+
+        while let Some(tb) = to_visit.pop() {
+            if visited_set.contains(&tb) {
+                continue;
+            }
+            to_visit.extend(tb.tensor.parents());
+            visited_set.insert(tb);
+        }
+        visited_set
+    }
+
+    pub fn leaves(&self) -> HashSet<TensorBox> {
+        let mut ans = self.ancestors();
+        ans.retain(|TensorBox { id: _, tensor: t }| t.parents() == vec![]);
+        ans
+    }
+
     fn apply_grad<Opt: Optimizer>(&mut self, optim: &mut Opt) {
         let new_value = {
             let t_grad = self.borrow_grad();
@@ -235,4 +262,8 @@ impl<T: Dtype> Tensor<T, (Const<1>,)> {
             }
         }
     }
+}
+
+pub fn remove_inputs(tensors: &mut HashSet<TensorBox>, input_ids: &[usize]) {
+    tensors.retain(|e| !input_ids.contains(&e.id));
 }
