@@ -3,7 +3,7 @@ use std::{marker::PhantomData, rc::Rc};
 use crate::{
     dtype::Dtype,
     ops::Op,
-    shape::{Const, Shape},
+    shape::{Const, HasNEls, Shape, D1, D2, D3},
     tensor::{Tensor, TensorBox},
 };
 
@@ -47,24 +47,11 @@ where
     }
 }
 
-impl<const A: usize, T: Dtype> Flattens<T, A> for Tensor<T, (Const<A>,)> {
+impl<const A: usize, T: Dtype, S: Shape> Flattens<T, A> for Tensor<T, S>
+where
+    S: HasNEls<A>,
+{
     fn flatten(self) -> Tensor<T, (Const<A>,)> {
-        FlattenStruct::new(self).forward()
-    }
-}
-
-impl<const A: usize, const B: usize, T: Dtype> Flattens<T, { A * B }>
-    for Tensor<T, (Const<A>, Const<B>)>
-{
-    fn flatten(self) -> Tensor<T, (Const<{ A * B }>,)> {
-        FlattenStruct::new(self).forward()
-    }
-}
-
-impl<const A: usize, const B: usize, const C: usize, T: Dtype> Flattens<T, { A * B * C }>
-    for Tensor<T, (Const<A>, Const<B>, Const<C>)>
-{
-    fn flatten(self) -> Tensor<T, (Const<{ A * B * C }>,)> {
         FlattenStruct::new(self).forward()
     }
 }
@@ -111,29 +98,28 @@ where
     }
 }
 
-impl<const A: usize, T: Dtype, S: Shape> Reshapes<T, (Const<A>,)> for Tensor<T, S>
+impl<const A: usize, T: Dtype, S: Shape> Reshapes<T, D1<A>> for Tensor<T, S>
 where
-    Tensor<T, S>: Flattens<T, A>,
+    S: HasNEls<A>,
 {
     fn reshape(self) -> Tensor<T, (Const<A>,)> {
         ReshapeStruct::new(self).forward()
     }
 }
 
-impl<const A: usize, const B: usize, T: Dtype, S: Shape> Reshapes<T, (Const<A>, Const<B>)>
-    for Tensor<T, S>
+impl<const A: usize, const B: usize, T: Dtype, S: Shape> Reshapes<T, D2<A, B>> for Tensor<T, S>
 where
-    Tensor<T, S>: Flattens<T, { A * B }>,
+    S: HasNEls<{ A * B }>,
 {
     fn reshape(self) -> Tensor<T, (Const<A>, Const<B>)> {
         ReshapeStruct::new(self).forward()
     }
 }
 
-impl<const A: usize, const B: usize, const C: usize, T: Dtype, S: Shape>
-    Reshapes<T, (Const<A>, Const<B>, Const<C>)> for Tensor<T, S>
+impl<const A: usize, const B: usize, const C: usize, T: Dtype, S: Shape> Reshapes<T, D3<A, B, C>>
+    for Tensor<T, S>
 where
-    Tensor<T, S>: Flattens<T, { A * B * C }>,
+    S: HasNEls<{ A * B * C }>,
 {
     fn reshape(self) -> Tensor<T, (Const<A>, Const<B>, Const<C>)> {
         ReshapeStruct::new(self).forward()

@@ -2,58 +2,79 @@
 pub struct Const<const S: usize>;
 
 pub trait Dim: std::fmt::Debug + 'static {
-    fn size(&self) -> usize;
+    fn size() -> usize;
 }
 
 impl<const S: usize> Dim for Const<S> {
-    fn size(&self) -> usize {
+    fn size() -> usize {
         S
-    }
-}
-
-impl Dim for usize {
-    fn size(&self) -> usize {
-        *self
     }
 }
 
 pub trait Shape: std::fmt::Debug + 'static {
     const NUM_DIMS: usize;
-    fn strides(&self) -> [usize; Self::NUM_DIMS];
+    const NUM_ELS: usize;
+    fn strides() -> &'static [usize];
+    fn shape() -> &'static [usize];
 }
 
 impl Shape for () {
     const NUM_DIMS: usize = 0;
+    const NUM_ELS: usize = 0;
 
-    fn strides(&self) -> [usize; Self::NUM_DIMS] {
-        [0; 0]
+    fn strides() -> &'static [usize] {
+        &[]
+    }
+    fn shape() -> &'static [usize] {
+        &[]
     }
 }
 
 impl<const A: usize> Shape for (Const<A>,) {
     const NUM_DIMS: usize = 1;
+    const NUM_ELS: usize = A;
 
-    fn strides(&self) -> [usize; Self::NUM_DIMS] {
-        [1]
+    fn strides() -> &'static [usize] {
+        &[1]
+    }
+
+    fn shape() -> &'static [usize] {
+        &[A]
     }
 }
 
 impl<const A: usize, const B: usize> Shape for (Const<A>, Const<B>) {
     const NUM_DIMS: usize = 2;
+    const NUM_ELS: usize = { A * B };
 
-    fn strides(&self) -> [usize; Self::NUM_DIMS] {
-        [B, 1]
+    fn strides() -> &'static [usize] {
+        &[B, 1]
+    }
+
+    fn shape() -> &'static [usize] {
+        &[A, B]
     }
 }
 
 impl<const A: usize, const B: usize, const C: usize> Shape for (Const<A>, Const<B>, Const<C>) {
     const NUM_DIMS: usize = 3;
+    const NUM_ELS: usize = { A * B * C };
 
-    fn strides(&self) -> [usize; Self::NUM_DIMS] {
-        [self.1.size() * self.2.size(), self.2.size(), 1]
+    fn strides() -> &'static [usize] {
+        &[B * C, C, 1]
+    }
+
+    fn shape() -> &'static [usize] {
+        &[A, B, C]
     }
 }
 
 pub type D1<const N: usize> = (Const<N>,);
 pub type D2<const N: usize, const M: usize> = (Const<N>, Const<M>);
 pub type D3<const N: usize, const M: usize, const O: usize> = (Const<N>, Const<M>, Const<O>);
+
+pub trait HasNEls<const N: usize> {}
+
+impl<const N: usize> HasNEls<N> for D1<N> {}
+impl<const N: usize, const M: usize> HasNEls<{ N * M }> for D2<N, M> {}
+impl<const N: usize, const M: usize, const O: usize> HasNEls<{ N * M * O }> for D3<N, M, O> {}
