@@ -2,14 +2,18 @@
 use mlframework::{
     change_dtype::Converts,
     reshape::Reshapes,
-    shape::{D1, D3},
+    shape::{D1, D2, D3},
     tensor::Tensor,
 };
 
-fn _shapes() {
-    let _x = Tensor::new([[4; 6]; 8]);
-    let _x: Tensor<_, D1<48>> = _x.reshape();
-    let _x: Tensor<_, D3<2, 2, 12>> = _x.reshape();
+fn shapes() {
+    let x = Tensor::new([[4; 6]; 8]);
+    let x: Tensor<_, D1<48>> = x.reshape();
+    let x: Tensor<_, D3<2, 2, 12>> = x.reshape();
+    let x: Tensor<_, D2<12, 4>> = x.reshape();
+    let y = Tensor::new([[1; 7]; 4]);
+    let m = x.matmul(y);
+    println!("m = {:?}", m);
 }
 
 fn main() {
@@ -33,7 +37,8 @@ fn main() {
 
     let s: Tensor<f64, _> = Tensor::new([2.0; 3]);
     let s2: Tensor<i32, _> = s.convert();
-    println!("{:?}", s2)
+    println!("{:?}", s2);
+    shapes();
 
     //0 x = (3, 4, 5)
     //1 y = (1, -2, 1)

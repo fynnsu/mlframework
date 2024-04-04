@@ -1,8 +1,9 @@
 use crate::ops::grad::{
     el_add_grad, el_div_grad, el_max_grad, el_min_grad, el_mul_grad, el_relu_grad, el_sub_grad,
 };
-use crate::ops::vec::{el_add, el_div, el_max, el_min, el_mul, el_relu, el_sub};
+use crate::ops::vec::{el_add, el_div, el_max, el_min, el_mul, el_relu, el_sub, matmul};
 use crate::tensor::TensorBox;
+use crate::tensor_data::TensorData;
 use crate::{
     dtype::Dtype,
     ops::Op,
@@ -15,7 +16,7 @@ use std::{
 };
 
 use super::grad::reduce_sum_grad;
-use super::vec::expand_to_shape;
+use super::vec::{expand_to_shape, transpose2d};
 
 macro_rules! impl_bin_el_op {
     ($s:ident, $t:ident, $tf:ident, $f:expr, $df:expr) => {
@@ -87,6 +88,9 @@ pub struct ElReLUStruct<T: Dtype, S: Shape>(Tensor<T, S>);
 #[derive(Debug)]
 pub struct ReduceSumStruct<T: Dtype, S: Shape>(Tensor<T, S>);
 
+#[derive(Debug)]
+pub struct MatmulStruct<T: Dtype, S1: Shape, S2: Shape>(Tensor<T, S1>, Tensor<T, S2>);
+
 impl_bin_el_op!(ElAddStruct, Add, add, el_add, el_add_grad);
 impl_bin_el_op!(ElSubStruct, Sub, sub, el_sub, el_sub_grad);
 impl_bin_el_op!(ElMulStruct, Mul, mul, el_mul, el_mul_grad);
@@ -135,13 +139,49 @@ impl<T: Dtype, S: Shape> Op for ElReLUStruct<T, S> {
     }
 }
 
-impl<T: Dtype, S: Shape> Tensor<T, S> {
-    pub fn relu(self) -> Self {
-        ElReLUStruct(self).forward()
+// Matmul
+impl<const N: usize, const M: usize, const O: usize, T: Dtype> Op
+    for MatmulStruct<T, (Const<N>, Const<M>), (Const<M>, Const<O>)>
+{
+    type Produces = Tensor<T, (Const<N>, Const<O>)>;
+
+    fn propogate_grad(&self, t: &Self::Produces) {
+        // t = matmul(a, b)     shape: (N, O)
+        // dt_da = b^T          shape: (O, M)
+        // d_da = d_dt @ dt_da     shape: (N, M)
+        // dt_db = a^T          shape: (M, N)
+        // d_db = dt_db @ d_dt    shape: (M, O)
+        if let Some(d_dt) = t.data.grad_ref().as_ref() {
+            let (d_da, d_db) = {
+                let a = self.0.borrow_value();
+                let b = self.1.borrow_value();
+                let d_da = matmul(d_dt, &transpose2d(&b, O), N, O, M);
+                let d_db = matmul(&transpose2d(&a, M), d_dt, M, N, O);
+                (d_da, d_db)
+            };
+            self.0.update_grad(d_da);
+            self.1.update_grad(d_db);
+        } else {
+            panic!("Attempted to propogate grad, but no grad value exists.")
+        }
     }
 
-    pub fn reduce_sum(self) -> Tensor<T, (Const<1>,)> {
-        ReduceSumStruct(self).forward()
+    fn forward(self) -> Self::Produces {
+        let data = {
+            let a = self.0.borrow_value(); // shape = (N, M)
+            let b = self.1.borrow_value(); // shape = (M, O)
+            matmul(&a, &b, N, M, O)
+        };
+        let td = TensorData::new(data);
+
+        unsafe { Self::Produces::from_rc_td_and_op_unchecked(Rc::new(td), Rc::new(self)) }
+    }
+
+    fn operands(&self) -> Vec<TensorBox> {
+        vec![
+            TensorBox::new(self.0.id, &self.0),
+            TensorBox::new(self.1.id, &self.1),
+        ]
     }
 }
 
@@ -171,5 +211,24 @@ impl<T: Dtype, S: Shape> Op for ReduceSumStruct<T, S> {
 
     fn operands(&self) -> Vec<TensorBox> {
         vec![TensorBox::new(self.0.id, &self.0)]
+    }
+}
+
+impl<T: Dtype, S: Shape> Tensor<T, S> {
+    pub fn relu(self) -> Self {
+        ElReLUStruct(self).forward()
+    }
+
+    pub fn reduce_sum(self) -> Tensor<T, (Const<1>,)> {
+        ReduceSumStruct(self).forward()
+    }
+}
+
+impl<const N: usize, const M: usize, T: Dtype> Tensor<T, (Const<N>, Const<M>)> {
+    pub fn matmul<const O: usize>(
+        self,
+        other: Tensor<T, (Const<M>, Const<O>)>,
+    ) -> Tensor<T, (Const<N>, Const<O>)> {
+        MatmulStruct(self, other).forward()
     }
 }
