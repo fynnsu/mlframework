@@ -22,7 +22,7 @@ fn prepare_for_training() {
     let y = Tensor::new([[3.0; 7]; 4]);
     let in_ids = [x.id, y.id];
 
-    let w = Tensor::new([[0.0; 7]; 3]);
+    let w = Tensor::new([[0.5; 7]; 3]);
     let y_hat = x.matmul(w);
     let diff = y - y_hat;
     let loss = (diff.clone() * diff.clone()).reduce_sum();

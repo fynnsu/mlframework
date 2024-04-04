@@ -48,6 +48,11 @@ where
         }
     }
 
+    fn recompute(&self, t: &Self::Produces) {
+        let data = el_unary(|v| NumCast::from(*v).unwrap(), &self.data.borrow_value());
+        t.data.replace(data)
+    }
+
     fn forward(self) -> Tensor<T, S> {
         let data = el_unary(|v| NumCast::from(*v).unwrap(), &self.data.borrow_value()).into();
         unsafe { Self::Produces::from_rc_td_and_op_unchecked(Rc::new(data), Rc::new(self)) }

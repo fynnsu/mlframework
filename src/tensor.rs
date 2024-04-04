@@ -25,6 +25,7 @@ pub trait TensorTrait: Debug {
     fn process_grad(&self);
     fn parents(&self) -> Vec<TensorBox>;
     fn grad_to_string(&self) -> String;
+    fn recompute(&self);
 }
 impl<T: Dtype, S: Shape> TensorTrait for Tensor<T, S> {
     fn process_grad(&self) {
@@ -42,6 +43,12 @@ impl<T: Dtype, S: Shape> TensorTrait for Tensor<T, S> {
 
     fn grad_to_string(&self) -> String {
         format!("{:?}", self.borrow_grad())
+    }
+
+    fn recompute(&self) {
+        if let Some(op) = &self.op {
+            op.recompute(self)
+        }
     }
 }
 
@@ -240,6 +247,20 @@ impl<T: Dtype, S: Shape> Tensor<T, S> {
         Self {
             op: Some(op),
             ..new_t
+        }
+    }
+
+    pub fn recompute(&self) {
+        let ancestors = self.ancestors();
+        let mut ancestors: Vec<_> = ancestors.iter().collect::<Vec<_>>();
+        ancestors.sort();
+
+        for b in ancestors {
+            b.tensor.recompute();
+        }
+
+        if let Some(op) = &self.op {
+            op.recompute(self);
         }
     }
 }

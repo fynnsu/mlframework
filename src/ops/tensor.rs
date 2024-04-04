@@ -38,7 +38,11 @@ macro_rules! impl_bin_el_op {
                     panic!("Attempted to propogate grad, but no grad value exists.")
                 }
             }
-            // let data = $f(&self.0.data, &self.1.data).into();
+
+            fn recompute(&self, t: &Self::Produces) {
+                let data = $f(&self.0.borrow_value(), &self.1.borrow_value()).into();
+                t.data.replace(data)
+            }
 
             fn forward(self) -> Self::Produces {
                 let data = $f(&self.0.borrow_value(), &self.1.borrow_value()).into();
@@ -129,6 +133,11 @@ impl<T: Dtype, S: Shape> Op for ElReLUStruct<T, S> {
         }
     }
 
+    fn recompute(&self, t: &Self::Produces) {
+        let data = el_relu(&self.0.borrow_value());
+        t.data.replace(data)
+    }
+
     fn forward(self) -> Self::Produces {
         let data = el_relu(&self.0.borrow_value()).into();
         unsafe { Self::Produces::from_rc_td_and_op_unchecked(Rc::new(data), Rc::new(self)) }
@@ -164,6 +173,15 @@ impl<const N: usize, const M: usize, const O: usize, T: Dtype> Op
         } else {
             panic!("Attempted to propogate grad, but no grad value exists.")
         }
+    }
+
+    fn recompute(&self, t: &Self::Produces) {
+        let data = {
+            let a = self.0.borrow_value(); // shape = (N, M)
+            let b = self.1.borrow_value(); // shape = (M, O)
+            matmul(&a, &b, N, M, O)
+        };
+        t.data.replace(data)
     }
 
     fn forward(self) -> Self::Produces {
@@ -202,6 +220,11 @@ impl<T: Dtype, S: Shape> Op for ReduceSumStruct<T, S> {
         } else {
             panic!("Attempted to propogate grad, but no grad value exists.")
         }
+    }
+
+    fn recompute(&self, t: &Self::Produces) {
+        let data = vec![(self.0.borrow_value().iter().fold(T::zero(), |s, x| s + *x))];
+        t.data.replace(data)
     }
 
     fn forward(self) -> Self::Produces {

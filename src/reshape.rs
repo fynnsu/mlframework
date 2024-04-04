@@ -36,6 +36,8 @@ where
         // Flatten does not change data, therefore no grad propogation occurs
     }
 
+    fn recompute(&self, _t: &Self::Produces) {}
+
     fn forward(self) -> Tensor<T, (Const<A>,)> {
         unsafe {
             Self::Produces::from_rc_td_and_op_unchecked(self.data.data.clone(), Rc::new(self))
@@ -86,6 +88,8 @@ where
     fn propogate_grad(&self, _t: &Self::Produces) {
         // Reshape does not change data, therefore no grad propogation occurs
     }
+
+    fn recompute(&self, _t: &Self::Produces) {}
 
     fn forward(self) -> Self::Produces {
         unsafe {
