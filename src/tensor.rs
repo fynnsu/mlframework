@@ -125,11 +125,29 @@ impl<T: Dtype, S: Shape> Clone for Tensor<T, S> {
 
 impl<T: Dtype + fmt::Debug, S: Shape + fmt::Debug> fmt::Debug for Tensor<T, S> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let strides = S::strides();
+        let data = self.borrow_value();
+        let mut t_str = String::with_capacity(data.len() * 4);
+        t_str += &"[".repeat(S::NUM_DIMS);
+        t_str += &format!("{:.2?}", data[0]);
+        for i in 1..S::NUM_ELS {
+            let mut n_match = 0;
+            for s in strides[..S::NUM_DIMS - 1].iter() {
+                if i % s == 0 {
+                    n_match += 1;
+                    t_str += "]";
+                }
+            }
+            t_str += ", ";
+            t_str += &"[".repeat(n_match);
+            t_str += &format!("{:.2?}", data[i]);
+        }
+        t_str += &"]".repeat(S::NUM_DIMS);
         write!(
             f,
-            "Tensor({:?}, shape={:?}, id={})",
-            self.data.as_ref(),
-            std::any::type_name::<S>(),
+            "Tensor({}, shape={:?}, id={})",
+            t_str,
+            S::shape(),
             self.id
         )
     }
