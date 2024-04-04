@@ -21,10 +21,15 @@ pub(crate) fn dot<T: Dtype>(a: &[T], b: &[T]) -> T {
 /// (m x n) matrix.
 pub(crate) fn transpose2d<T: Dtype>(a: &[T], n: usize) -> Vec<T> {
     assert!(a.len() % n == 0);
-    (0..n).fold(Vec::with_capacity(a.len()), |mut v, i| {
-        v.extend(a.iter().skip(i).step_by(n));
-        v
-    })
+    let m = a.len() / n;
+    let mut data = Vec::with_capacity(a.len());
+    for i in 0..n {
+        for j in 0..m {
+            // data[i, j] = a[j, i]
+            data.push(a[(j * n) + i])
+        }
+    }
+    data
 }
 
 #[test]
