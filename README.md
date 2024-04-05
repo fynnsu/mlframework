@@ -39,7 +39,7 @@ let x3: Tensor<f32, D1<51>> = x2.reshape(); // ERROR!!
 - [x] Basic backprop implementation
   - [x] Fix graph traversal complexity
 - [x] Tensor Shapes
-- [ ] Matmul
+- [x] Matmul
 - [ ] Tensor Indexing
 - [x] Potentially improve Op implementation
   - [x] Make it simpler to create/register new ops & backward functions
@@ -48,8 +48,4 @@ let x3: Tensor<f32, D1<51>> = x2.reshape(); // ERROR!!
 - [ ] Implement an optimizer
 - [ ] Setup test structure
 - [ ] Organize repo code
-- [ ] Add CI w/ Github Actions
-
-```
-
-```
+- [x] Add CI w/ Github Actions
