@@ -263,6 +263,13 @@ impl<T: Dtype, S: Shape> Tensor<T, S> {
             op.recompute(self);
         }
     }
+
+    pub fn replace_data_with(&self, new_data: Vec<T>) {
+        {
+            assert_eq!(new_data.len(), self.borrow_value().len());
+        }
+        self.data.replace(new_data);
+    }
 }
 
 impl<T: Dtype> Tensor<T, (Const<1>,)> {

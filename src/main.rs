@@ -19,6 +19,7 @@ fn shapes() {
 
 fn prepare_for_training() {
     let x = Tensor::new([[1.0; 3]; 4]);
+    let x_clone = x.clone();
     let y = Tensor::new([[3.0; 7]; 4]);
     let in_ids = [x.id, y.id];
 
@@ -26,6 +27,11 @@ fn prepare_for_training() {
     let y_hat = x.matmul(w);
     let diff = y - y_hat;
     let loss = (diff.clone() * diff.clone()).reduce_sum();
+
+    println!("Loss 1: {:?}", loss);
+    x_clone.replace_data_with(vec![-1.0; 12]);
+    loss.recompute();
+    println!("Loss 2: {:?}", loss);
 
     let mut parameters = loss.leaves();
     remove_inputs(&mut parameters, &in_ids);
