@@ -3,15 +3,16 @@
 use mlframework::{
     change_dtype::Converts,
     reshape::Reshapes,
-    shape::{D1, D2, D3},
+    s,
+    shape::I,
     tensor::{remove_inputs, Tensor},
 };
 
 fn shapes() {
     let x = Tensor::new([[4; 6]; 8]);
-    let x: Tensor<_, D1<48>> = x.reshape();
-    let x: Tensor<_, D3<2, 2, 12>> = x.reshape();
-    let x: Tensor<_, D2<12, 4>> = x.reshape();
+    let x: Tensor<_, s!(48)> = x.reshape();
+    let x: Tensor<_, s!(2, 2, 12)> = x.reshape();
+    let x: Tensor<_, s!(12, 4)> = x.reshape();
     let y = Tensor::new([[1; 7]; 4]);
     let m = x.matmul(y);
     println!("m = {:?}", m);

@@ -78,3 +78,10 @@ pub trait HasNEls<const N: usize> {}
 impl<const N: usize> HasNEls<N> for D1<N> {}
 impl<const N: usize, const M: usize> HasNEls<{ N * M }> for D2<N, M> {}
 impl<const N: usize, const M: usize, const O: usize> HasNEls<{ N * M * O }> for D3<N, M, O> {}
+
+#[macro_export]
+macro_rules! s {
+    () => ();
+    ($d:expr) => {(I<$d>,)};
+    ( $($d:expr),+ ) => {($(I<$d>),+)}
+}
