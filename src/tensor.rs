@@ -10,7 +10,7 @@ use crate::dtype::Dtype;
 // use crate::graph::TensorGraph;
 use crate::ops::Op;
 use crate::optim::Optimizer;
-use crate::shape::{Const, Shape};
+use crate::shape::{Shape, I};
 use crate::tensor_data::TensorData;
 use crate::tensor_id::generate_id;
 
@@ -90,13 +90,13 @@ impl<'a> Hash for TensorBox<'a> {
 
 #[cfg(test)]
 mod tests {
-    use crate::shape::Const;
+    use crate::shape::I;
 
     use super::*;
 
     #[test]
     fn test_create_tensor_from_vec() {
-        let _t: Tensor<i32, (Const<4>,)> = Tensor::new(vec![0, 0, 1, 2]);
+        let _t: Tensor<i32, (I<4>,)> = Tensor::new(vec![0, 0, 1, 2]);
     }
 
     #[test]
@@ -272,7 +272,7 @@ impl<T: Dtype, S: Shape> Tensor<T, S> {
     }
 }
 
-impl<T: Dtype> Tensor<T, (Const<1>,)> {
+impl<T: Dtype> Tensor<T, (I<1>,)> {
     pub fn backward(&self) {
         self.update_grad(vec![T::one()]);
         let mut heap = BinaryHeap::new();

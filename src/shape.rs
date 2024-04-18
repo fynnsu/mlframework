@@ -1,11 +1,11 @@
 #[derive(Debug)]
-pub struct Const<const S: usize>;
+pub struct I<const S: usize>;
 
 pub trait Dim: std::fmt::Debug + 'static {
     fn size() -> usize;
 }
 
-impl<const S: usize> Dim for Const<S> {
+impl<const S: usize> Dim for I<S> {
     fn size() -> usize {
         S
     }
@@ -30,7 +30,7 @@ impl Shape for () {
     }
 }
 
-impl<const A: usize> Shape for (Const<A>,) {
+impl<const A: usize> Shape for (I<A>,) {
     const NUM_DIMS: usize = 1;
     const NUM_ELS: usize = A;
 
@@ -43,7 +43,7 @@ impl<const A: usize> Shape for (Const<A>,) {
     }
 }
 
-impl<const A: usize, const B: usize> Shape for (Const<A>, Const<B>) {
+impl<const A: usize, const B: usize> Shape for (I<A>, I<B>) {
     const NUM_DIMS: usize = 2;
     const NUM_ELS: usize = { A * B };
 
@@ -56,7 +56,7 @@ impl<const A: usize, const B: usize> Shape for (Const<A>, Const<B>) {
     }
 }
 
-impl<const A: usize, const B: usize, const C: usize> Shape for (Const<A>, Const<B>, Const<C>) {
+impl<const A: usize, const B: usize, const C: usize> Shape for (I<A>, I<B>, I<C>) {
     const NUM_DIMS: usize = 3;
     const NUM_ELS: usize = { A * B * C };
 
@@ -69,9 +69,9 @@ impl<const A: usize, const B: usize, const C: usize> Shape for (Const<A>, Const<
     }
 }
 
-pub type D1<const N: usize> = (Const<N>,);
-pub type D2<const N: usize, const M: usize> = (Const<N>, Const<M>);
-pub type D3<const N: usize, const M: usize, const O: usize> = (Const<N>, Const<M>, Const<O>);
+pub type D1<const N: usize> = (I<N>,);
+pub type D2<const N: usize, const M: usize> = (I<N>, I<M>);
+pub type D3<const N: usize, const M: usize, const O: usize> = (I<N>, I<M>, I<O>);
 
 pub trait HasNEls<const N: usize> {}
 

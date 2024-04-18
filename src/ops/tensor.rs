@@ -7,7 +7,7 @@ use crate::tensor_data::TensorData;
 use crate::{
     dtype::Dtype,
     ops::Op,
-    shape::{Const, Shape},
+    shape::{Shape, I},
     tensor::Tensor,
 };
 use std::{
@@ -150,9 +150,9 @@ impl<T: Dtype, S: Shape> Op for ElReLUStruct<T, S> {
 
 // Matmul
 impl<const N: usize, const M: usize, const O: usize, T: Dtype> Op
-    for MatmulStruct<T, (Const<N>, Const<M>), (Const<M>, Const<O>)>
+    for MatmulStruct<T, (I<N>, I<M>), (I<M>, I<O>)>
 {
-    type Produces = Tensor<T, (Const<N>, Const<O>)>;
+    type Produces = Tensor<T, (I<N>, I<O>)>;
 
     fn propogate_grad(&self, t: &Self::Produces) {
         // t = matmul(a, b)     shape: (N, O)
@@ -205,7 +205,7 @@ impl<const N: usize, const M: usize, const O: usize, T: Dtype> Op
 
 // Reduce sum
 impl<T: Dtype, S: Shape> Op for ReduceSumStruct<T, S> {
-    type Produces = Tensor<T, (Const<1>,)>;
+    type Produces = Tensor<T, (I<1>,)>;
 
     fn propogate_grad(&self, t: &Self::Produces) {
         // t = reduce_sum(a)
@@ -242,16 +242,13 @@ impl<T: Dtype, S: Shape> Tensor<T, S> {
         ElReLUStruct(self).forward()
     }
 
-    pub fn reduce_sum(self) -> Tensor<T, (Const<1>,)> {
+    pub fn reduce_sum(self) -> Tensor<T, (I<1>,)> {
         ReduceSumStruct(self).forward()
     }
 }
 
-impl<const N: usize, const M: usize, T: Dtype> Tensor<T, (Const<N>, Const<M>)> {
-    pub fn matmul<const O: usize>(
-        self,
-        other: Tensor<T, (Const<M>, Const<O>)>,
-    ) -> Tensor<T, (Const<N>, Const<O>)> {
+impl<const N: usize, const M: usize, T: Dtype> Tensor<T, (I<N>, I<M>)> {
+    pub fn matmul<const O: usize>(self, other: Tensor<T, (I<M>, I<O>)>) -> Tensor<T, (I<N>, I<O>)> {
         MatmulStruct(self, other).forward()
     }
 }

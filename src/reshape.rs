@@ -3,12 +3,12 @@ use std::{marker::PhantomData, rc::Rc};
 use crate::{
     dtype::Dtype,
     ops::Op,
-    shape::{Const, HasNEls, Shape, D1, D2, D3},
+    shape::{HasNEls, Shape, D1, D2, D3, I},
     tensor::{Tensor, TensorBox},
 };
 
 pub trait Flattens<T: Dtype, const A: usize> {
-    fn flatten(self) -> Tensor<T, (Const<A>,)>;
+    fn flatten(self) -> Tensor<T, (I<A>,)>;
 }
 
 #[derive(Debug)]
@@ -30,7 +30,7 @@ impl<const A: usize, T: Dtype, S: Shape> Op for FlattenStruct<T, A, Tensor<T, S>
 where
     Tensor<T, S>: Flattens<T, A>,
 {
-    type Produces = Tensor<T, (Const<A>,)>;
+    type Produces = Tensor<T, (I<A>,)>;
 
     fn propogate_grad(&self, _t: &Self::Produces) {
         // Flatten does not change data, therefore no grad propogation occurs
@@ -38,7 +38,7 @@ where
 
     fn recompute(&self, _t: &Self::Produces) {}
 
-    fn forward(self) -> Tensor<T, (Const<A>,)> {
+    fn forward(self) -> Tensor<T, (I<A>,)> {
         unsafe {
             Self::Produces::from_rc_td_and_op_unchecked(self.data.data.clone(), Rc::new(self))
         }
@@ -53,7 +53,7 @@ impl<const A: usize, T: Dtype, S: Shape> Flattens<T, A> for Tensor<T, S>
 where
     S: HasNEls<A>,
 {
-    fn flatten(self) -> Tensor<T, (Const<A>,)> {
+    fn flatten(self) -> Tensor<T, (I<A>,)> {
         FlattenStruct::new(self).forward()
     }
 }
@@ -106,7 +106,7 @@ impl<const A: usize, T: Dtype, S: Shape> Reshapes<T, D1<A>> for Tensor<T, S>
 where
     S: HasNEls<A>,
 {
-    fn reshape(self) -> Tensor<T, (Const<A>,)> {
+    fn reshape(self) -> Tensor<T, (I<A>,)> {
         ReshapeStruct::new(self).forward()
     }
 }
@@ -115,7 +115,7 @@ impl<const A: usize, const B: usize, T: Dtype, S: Shape> Reshapes<T, D2<A, B>> f
 where
     S: HasNEls<{ A * B }>,
 {
-    fn reshape(self) -> Tensor<T, (Const<A>, Const<B>)> {
+    fn reshape(self) -> Tensor<T, (I<A>, I<B>)> {
         ReshapeStruct::new(self).forward()
     }
 }
@@ -125,7 +125,7 @@ impl<const A: usize, const B: usize, const C: usize, T: Dtype, S: Shape> Reshape
 where
     S: HasNEls<{ A * B * C }>,
 {
-    fn reshape(self) -> Tensor<T, (Const<A>, Const<B>, Const<C>)> {
+    fn reshape(self) -> Tensor<T, (I<A>, I<B>, I<C>)> {
         ReshapeStruct::new(self).forward()
     }
 }
