@@ -46,7 +46,7 @@ macro_rules! impl_bin_el_op {
 
             fn forward(self) -> Self::Produces {
                 let data = $f(&self.0.borrow_value(), &self.1.borrow_value()).into();
-                unsafe { Self::Produces::from_rc_td_and_op_unchecked(Rc::new(data), Rc::new(self)) }
+                unsafe { Self::Produces::from_rc_td_and_op_unchecked(data, Rc::new(self)) }
             }
 
             fn operands(&self) -> Vec<TensorBox> {
@@ -140,7 +140,7 @@ impl<T: Dtype, S: Shape> Op for ElReLUStruct<T, S> {
 
     fn forward(self) -> Self::Produces {
         let data = el_relu(&self.0.borrow_value()).into();
-        unsafe { Self::Produces::from_rc_td_and_op_unchecked(Rc::new(data), Rc::new(self)) }
+        unsafe { Self::Produces::from_rc_td_and_op_unchecked(data, Rc::new(self)) }
     }
 
     fn operands(&self) -> Vec<TensorBox> {
@@ -192,7 +192,7 @@ impl<const N: usize, const M: usize, const O: usize, T: Dtype> Op
         };
         let td = TensorData::new(data);
 
-        unsafe { Self::Produces::from_rc_td_and_op_unchecked(Rc::new(td), Rc::new(self)) }
+        unsafe { Self::Produces::from_rc_td_and_op_unchecked(td, Rc::new(self)) }
     }
 
     fn operands(&self) -> Vec<TensorBox> {
@@ -229,7 +229,7 @@ impl<T: Dtype, S: Shape> Op for ReduceSumStruct<T, S> {
 
     fn forward(self) -> Self::Produces {
         let data = vec![(self.0.borrow_value().iter().fold(T::zero(), |s, x| s + *x))].into();
-        unsafe { Self::Produces::from_rc_td_and_op_unchecked(Rc::new(data), Rc::new(self)) }
+        unsafe { Self::Produces::from_rc_td_and_op_unchecked(data, Rc::new(self)) }
     }
 
     fn operands(&self) -> Vec<TensorBox> {

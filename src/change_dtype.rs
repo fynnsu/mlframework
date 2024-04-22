@@ -55,7 +55,7 @@ where
 
     fn forward(self) -> Tensor<T, S> {
         let data = el_unary(|v| NumCast::from(*v).unwrap(), &self.data.borrow_value()).into();
-        unsafe { Self::Produces::from_rc_td_and_op_unchecked(Rc::new(data), Rc::new(self)) }
+        unsafe { Self::Produces::from_rc_td_and_op_unchecked(data, Rc::new(self)) }
     }
 
     fn operands(&self) -> Vec<TensorBox> {

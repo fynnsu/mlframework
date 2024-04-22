@@ -1,12 +1,13 @@
 use std::cell::{Ref, RefCell};
 use std::ops::Deref;
+use std::rc::Rc;
 
 use crate::dtype::Dtype;
 use crate::ops::vec::el_add;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub(crate) struct TensorData<T: Dtype> {
-    inner: RefCell<TensorDataInner<T>>,
+    inner: Rc<RefCell<TensorDataInner<T>>>,
 }
 
 #[derive(Debug)]
@@ -18,7 +19,7 @@ pub(crate) struct TensorDataInner<T: Dtype> {
 impl<T: Dtype> TensorData<T> {
     pub(crate) fn new(value: Vec<T>) -> Self {
         Self {
-            inner: RefCell::new(TensorDataInner { value, grad: None }),
+            inner: Rc::new(RefCell::new(TensorDataInner { value, grad: None })),
         }
     }
 

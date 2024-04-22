@@ -15,7 +15,7 @@ use crate::tensor_data::TensorData;
 use crate::tensor_id::generate_id;
 
 pub struct Tensor<T: Dtype, S: Shape> {
-    pub(crate) data: Rc<TensorData<T>>,
+    pub(crate) data: TensorData<T>,
     pub(crate) op: Option<Rc<dyn Op<Produces = Tensor<T, S>>>>,
     pub id: usize,
     pub(crate) _shape: PhantomData<S>,
@@ -126,7 +126,7 @@ mod tests {
 impl<T: Dtype, S: Shape> Clone for Tensor<T, S> {
     fn clone(&self) -> Self {
         Self {
-            data: Rc::clone(&self.data),
+            data: self.data.clone(),
             op: match &self.op {
                 Some(_op) => Some(Rc::clone(_op)),
                 None => None,
@@ -170,14 +170,14 @@ impl<T: Dtype + fmt::Debug, S: Shape + fmt::Debug> fmt::Debug for Tensor<T, S> {
 impl<T: Dtype, S: Shape> Tensor<T, S> {
     pub(crate) unsafe fn from_vec_unchecked(value: Vec<T>) -> Self {
         Self {
-            data: Rc::new(TensorData::new(value)),
+            data: TensorData::new(value),
             op: None,
             id: generate_id(),
             _shape: Default::default(),
         }
     }
     pub(crate) unsafe fn from_rc_td_and_op_unchecked(
-        value: Rc<TensorData<T>>,
+        value: TensorData<T>,
         op: Rc<dyn Op<Produces = Tensor<T, S>>>,
     ) -> Self {
         Self {
