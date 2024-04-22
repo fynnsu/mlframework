@@ -4,7 +4,6 @@ use mlframework::{
     change_dtype::Converts,
     reshape::Reshapes,
     s,
-    shape::I,
     tensor::{remove_inputs, Tensor},
 };
 
@@ -24,7 +23,7 @@ fn prepare_for_training() {
     let y = Tensor::new([[3.0; 7]; 4]);
     let in_ids = [x.id, y.id];
 
-    let w = Tensor::new([[0.5; 7]; 3]);
+    let w = Tensor::new_with_grad([[0.5; 7]; 3]);
     let y_hat = x.matmul(w);
     let diff = y - y_hat;
     let loss = (diff.clone() * diff.clone()).reduce_sum();
@@ -46,8 +45,8 @@ fn prepare_for_training() {
 fn main() {
     let x = Tensor::new([2.0; 3]);
     let x_cloned = x.clone();
-    let y = Tensor::new([1., -2., 1.]);
-    let z = Tensor::new(vec![-3., 1., 3.]);
+    let y = Tensor::new_with_grad([1., -2., 1.]);
+    let z = Tensor::new_with_grad(vec![-3., 1., 3.]);
     let xxy = x + y.clone() + y;
     println!("xxy = {:?}", xxy);
     let zrelu = z.relu();

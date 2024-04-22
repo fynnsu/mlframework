@@ -78,9 +78,7 @@ impl<T: Dtype> TensorData<T> {
 
     pub(crate) fn update_grad(&self, new_grad: Vec<T>) {
         match *self.inner.borrow_mut() {
-            Value { value: _ } => {
-                panic!("Update grad called on TensorData::Value")
-            }
+            Value { value: _ } => {}
             ValueWithGradOption {
                 value: _,
                 grad: ref mut g,

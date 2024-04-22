@@ -30,8 +30,10 @@ pub trait TensorTrait: Debug {
 }
 impl<T: Dtype, S: Shape> TensorTrait for Tensor<T, S> {
     fn process_grad(&self) {
-        if let Some(op) = self.op.as_ref() {
-            op.propogate_grad(self);
+        if self.requires_grad() {
+            if let Some(op) = self.op.as_ref() {
+                op.propogate_grad(self);
+            }
         }
     }
 

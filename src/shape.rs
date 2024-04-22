@@ -82,6 +82,6 @@ impl<const N: usize, const M: usize, const O: usize> HasNEls<{ N * M * O }> for 
 #[macro_export]
 macro_rules! s {
     () => ();
-    ($d:expr) => {(I<$d>,)};
-    ( $($d:expr),+ ) => {($(I<$d>),+)}
+    ($d:expr) => {(mlframework::shape::I<$d>,)};
+    ( $($d:expr),+ ) => {($(mlframework::shape::I<$d>),+)}
 }
