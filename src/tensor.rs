@@ -23,6 +23,7 @@ pub struct Tensor<T: Dtype, S: Shape> {
 
 pub trait TensorTrait: Debug {
     fn process_grad(&self);
+    fn requires_grad(&self) -> bool;
     fn parents(&self) -> Vec<TensorBox>;
     fn grad_to_string(&self) -> String;
     fn recompute(&self);
@@ -32,6 +33,10 @@ impl<T: Dtype, S: Shape> TensorTrait for Tensor<T, S> {
         if let Some(op) = self.op.as_ref() {
             op.propogate_grad(self);
         }
+    }
+
+    fn requires_grad(&self) -> bool {
+        self.data.has_grad_field()
     }
 
     fn parents(&self) -> Vec<TensorBox> {
@@ -170,7 +175,7 @@ impl<T: Dtype + fmt::Debug, S: Shape + fmt::Debug> fmt::Debug for Tensor<T, S> {
 impl<T: Dtype, S: Shape> Tensor<T, S> {
     pub(crate) unsafe fn from_vec_unchecked(value: Vec<T>) -> Self {
         Self {
-            data: TensorData::new(value),
+            data: TensorData::new(value, false),
             op: None,
             id: generate_id(),
             _shape: Default::default(),
@@ -189,6 +194,12 @@ impl<T: Dtype, S: Shape> Tensor<T, S> {
     }
     pub fn new(data: impl Into<Tensor<T, S>>) -> Self {
         data.into()
+    }
+
+    pub fn new_with_grad(data: impl Into<Tensor<T, S>>) -> Self {
+        let tensor: Tensor<T, S> = data.into();
+        unsafe { tensor.data.add_grad_field() }
+        tensor
     }
 
     pub(crate) fn borrow_value(&self) -> Ref<Vec<T>> {
@@ -274,6 +285,10 @@ impl<T: Dtype, S: Shape> Tensor<T, S> {
 
 impl<T: Dtype> Tensor<T, (I<1>,)> {
     pub fn backward(&self) {
+        assert!(
+            self.requires_grad(),
+            "Tensor must require grad to call backward() on it."
+        );
         self.update_grad(vec![T::one()]);
         let mut heap = BinaryHeap::new();
         let mut set = HashSet::new();

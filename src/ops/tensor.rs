@@ -2,7 +2,7 @@ use crate::ops::grad::{
     el_add_grad, el_div_grad, el_max_grad, el_min_grad, el_mul_grad, el_relu_grad, el_sub_grad,
 };
 use crate::ops::vec::{el_add, el_div, el_max, el_min, el_mul, el_relu, el_sub, matmul};
-use crate::tensor::TensorBox;
+use crate::tensor::{TensorBox, TensorTrait};
 use crate::tensor_data::TensorData;
 use crate::{
     dtype::Dtype,
@@ -45,7 +45,8 @@ macro_rules! impl_bin_el_op {
             }
 
             fn forward(self) -> Self::Produces {
-                let data = $f(&self.0.borrow_value(), &self.1.borrow_value()).into();
+                let value = $f(&self.0.borrow_value(), &self.1.borrow_value());
+                let data = TensorData::new(value, self.0.requires_grad() || self.1.requires_grad());
                 unsafe { Self::Produces::from_rc_td_and_op_unchecked(data, Rc::new(self)) }
             }
 
@@ -139,7 +140,7 @@ impl<T: Dtype, S: Shape> Op for ElReLUStruct<T, S> {
     }
 
     fn forward(self) -> Self::Produces {
-        let data = el_relu(&self.0.borrow_value()).into();
+        let data = TensorData::new(el_relu(&self.0.borrow_value()), self.0.requires_grad());
         unsafe { Self::Produces::from_rc_td_and_op_unchecked(data, Rc::new(self)) }
     }
 
@@ -190,7 +191,7 @@ impl<const N: usize, const M: usize, const O: usize, T: Dtype> Op
             let b = self.1.borrow_value(); // shape = (M, O)
             matmul(&a, &b, N, M, O)
         };
-        let td = TensorData::new(data);
+        let td = TensorData::new(data, self.0.requires_grad() || self.1.requires_grad());
 
         unsafe { Self::Produces::from_rc_td_and_op_unchecked(td, Rc::new(self)) }
     }
@@ -228,7 +229,8 @@ impl<T: Dtype, S: Shape> Op for ReduceSumStruct<T, S> {
     }
 
     fn forward(self) -> Self::Produces {
-        let data = vec![(self.0.borrow_value().iter().fold(T::zero(), |s, x| s + *x))].into();
+        let value = vec![(self.0.borrow_value().iter().fold(T::zero(), |s, x| s + *x))];
+        let data = TensorData::new(value, self.0.requires_grad());
         unsafe { Self::Produces::from_rc_td_and_op_unchecked(data, Rc::new(self)) }
     }
 

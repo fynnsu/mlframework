@@ -4,7 +4,8 @@ use crate::{
     dtype::Dtype,
     ops::{vec::el_unary, Op},
     shape::Shape,
-    tensor::{Tensor, TensorBox},
+    tensor::{Tensor, TensorBox, TensorTrait},
+    tensor_data::TensorData,
 };
 
 use num::NumCast;
@@ -54,7 +55,8 @@ where
     }
 
     fn forward(self) -> Tensor<T, S> {
-        let data = el_unary(|v| NumCast::from(*v).unwrap(), &self.data.borrow_value()).into();
+        let value = el_unary(|v| NumCast::from(*v).unwrap(), &self.data.borrow_value());
+        let data = TensorData::new(value, self.data.requires_grad());
         unsafe { Self::Produces::from_rc_td_and_op_unchecked(data, Rc::new(self)) }
     }
 

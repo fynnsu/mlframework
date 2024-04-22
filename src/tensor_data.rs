@@ -18,15 +18,35 @@ pub(crate) enum TensorDataInner<T: Dtype> {
 use TensorDataInner::*;
 
 impl<T: Dtype> TensorData<T> {
-    pub(crate) fn new(value: Vec<T>) -> Self {
+    pub(crate) fn new(value: Vec<T>, requires_grad: bool) -> Self {
         Self {
-            inner: Rc::new(RefCell::new(ValueWithGradOption { value, grad: None })),
+            inner: Rc::new(RefCell::new(if requires_grad {
+                ValueWithGradOption { value, grad: None }
+            } else {
+                Value { value }
+            })),
         }
     }
 
-    pub(crate) fn new_without_grad(value: Vec<T>) -> Self {
-        Self {
-            inner: Rc::new(RefCell::new(Value { value })),
+    pub(crate) unsafe fn add_grad_field(&self) {
+        self.inner.replace_with(|tdi| {
+            let v = match tdi {
+                Value { value } => value,
+                ValueWithGradOption { value: _, grad: _ } => {
+                    panic!("TensorData already has grad field.")
+                }
+            };
+            ValueWithGradOption {
+                value: v.clone(),
+                grad: None,
+            }
+        });
+    }
+
+    pub(crate) fn has_grad_field(&self) -> bool {
+        match *self.inner.borrow() {
+            Value { value: _ } => false,
+            ValueWithGradOption { value: _, grad: _ } => true,
         }
     }
 
@@ -75,8 +95,13 @@ impl<T: Dtype> TensorData<T> {
     }
 }
 
-impl<T: Dtype> From<Vec<T>> for TensorData<T> {
-    fn from(value: Vec<T>) -> Self {
-        Self::new(value)
+impl<T: Dtype> TensorDataInner<T> {
+    fn replace_with_grad_variant(self) -> Self {
+        match self {
+            Value { value } => ValueWithGradOption { value, grad: None },
+            ValueWithGradOption { value: _, grad: _ } => {
+                panic!("TensorData already has grad field.")
+            }
+        }
     }
 }
