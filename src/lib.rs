@@ -1,5 +1,6 @@
 #![feature(generic_const_exprs)]
 #![allow(dead_code, incomplete_features)]
+pub mod build_model;
 pub mod change_dtype;
 pub mod dtype;
 pub mod module;

@@ -7,7 +7,6 @@ use std::rc::Rc;
 use std::{fmt, usize};
 
 use crate::dtype::Dtype;
-// use crate::graph::TensorGraph;
 use crate::ops::Op;
 use crate::optim::Optimizer;
 use crate::shape::{Shape, I};
@@ -120,6 +119,14 @@ impl<T: Dtype, S: Shape> Clone for Tensor<T, S> {
             _shape: Default::default(),
         }
     }
+}
+
+pub trait HasDtype {
+    type Dtype;
+}
+
+impl<T: Dtype, S: Shape> HasDtype for Tensor<T, S> {
+    type Dtype = T;
 }
 
 impl<T: Dtype + fmt::Debug, S: Shape + fmt::Debug> fmt::Debug for Tensor<T, S> {
@@ -250,9 +257,7 @@ impl<T: Dtype, S: Shape> Tensor<T, S> {
             b.tensor.recompute();
         }
 
-        if let Some(op) = &self.op {
-            op.recompute(self);
-        }
+        TensorTrait::recompute(self);
     }
 
     pub fn replace_data_with(&self, new_data: Vec<T>) {
