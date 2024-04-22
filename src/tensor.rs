@@ -21,6 +21,19 @@ pub struct Tensor<T: Dtype, S: Shape> {
     pub(crate) _shape: PhantomData<S>,
 }
 
+#[macro_export]
+macro_rules! t {
+    ($dt:ty, ()) => {
+        Tensor::<$dt, ()>
+    };
+    ($dt:ty, ($s:expr)) => {
+        Tensor::<$dt, (mlframework::shape::I<$s>,)>
+    };
+    ($dt:ty, ($($s:expr),+ )) => {
+        Tensor::<$dt, ($(mlframework::shape::I<$s>),+)>
+    };
+}
+
 pub trait TensorTrait: Debug {
     fn process_grad(&self);
     fn requires_grad(&self) -> bool;

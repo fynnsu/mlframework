@@ -1,11 +1,6 @@
 #![allow(incomplete_features)]
 #![feature(generic_const_exprs)]
-use mlframework::{
-    change_dtype::Converts,
-    reshape::Reshapes,
-    s,
-    tensor::{remove_inputs, Tensor},
-};
+use mlframework::{change_dtype::Converts, reshape::Reshapes, s, t, tensor::remove_inputs, Tensor};
 
 fn shapes() {
     let x = Tensor::new([[4; 6]; 8]);
@@ -13,7 +8,7 @@ fn shapes() {
     let x: Tensor<_, s!(2, 2, 12)> = x.reshape();
     let x: Tensor<_, s!(12, 4)> = x.reshape();
     let y = Tensor::new([[1; 7]; 4]);
-    let m = x.matmul(y);
+    let m: t!(i32, (12, 7)) = x.matmul(y);
     println!("m = {:?}", m);
 }
 
