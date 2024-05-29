@@ -34,19 +34,21 @@ macro_rules! t {
 }
 
 pub trait TensorTrait: Debug {
-    fn process_grad(&self);
+    fn process_grad(&self) -> bool;
     fn requires_grad(&self) -> bool;
     fn parents(&self) -> Vec<TensorBox>;
     fn grad_to_string(&self) -> String;
     fn recompute(&self);
 }
 impl<T: Dtype, S: Shape> TensorTrait for Tensor<T, S> {
-    fn process_grad(&self) {
+    fn process_grad(&self) -> bool {
         if self.requires_grad() {
             if let Some(op) = self.op.as_ref() {
                 op.propogate_grad(self);
+                return true;
             }
         }
+        false
     }
 
     fn requires_grad(&self) -> bool {
@@ -221,7 +223,7 @@ impl<T: Dtype, S: Shape> Tensor<T, S> {
         ans
     }
 
-    fn apply_grad<Opt: Optimizer>(&mut self, optim: &mut Opt) {
+    pub fn consume_grad<Opt: Optimizer>(&self, optim: &mut Opt) {
         let new_value = {
             let t_grad = self.borrow_grad();
             if let Some(t_grad) = t_grad.as_ref() {
@@ -281,11 +283,12 @@ impl<T: Dtype> Tensor<T, (I<1>,)> {
         set.insert(b.id);
         heap.push(b);
         while let Some(TensorBox { id: _, tensor: t }) = heap.pop() {
-            t.process_grad();
-            for parent in t.parents() {
-                if !set.contains(&parent.id) {
-                    set.insert(parent.id);
-                    heap.push(parent);
+            if t.process_grad() {
+                for parent in t.parents() {
+                    if !set.contains(&parent.id) {
+                        set.insert(parent.id);
+                        heap.push(parent);
+                    }
                 }
             }
         }

@@ -156,3 +156,11 @@ pub(crate) fn el_pos<T: Dtype>(a: &[T]) -> Vec<T> {
     // Return 1 if x >= 0, else 0
     el_unary(|x| if *x >= T::zero() { T::one() } else { T::zero() }, a)
 }
+
+pub(crate) fn scalar_mul<T: Dtype>(a: T, b: &[T]) -> Vec<T> {
+    el_unary(|x| a * *x, b)
+}
+
+pub(crate) fn scalar_add<T: Dtype>(a: T, b: &[T]) -> Vec<T> {
+    el_unary(|x| a + *x, b)
+}

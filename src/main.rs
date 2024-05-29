@@ -1,7 +1,8 @@
 #![allow(incomplete_features)]
 #![feature(generic_const_exprs)]
 use mlframework::{
-    build_mod, change_dtype::Converts, reshape::Reshapes, s, t, tensor::remove_inputs, Tensor,
+    build_mod, change_dtype::Converts, optim::GradientDescent, reshape::Reshapes, s, t,
+    tensor::remove_inputs, Tensor,
 };
 
 fn shapes() {
@@ -24,17 +25,23 @@ fn prepare_for_training() {
     let in_ids = [x.id, y.id];
 
     let w = Tensor::new_with_grad([[0.5; 7]; 3]);
+    let w_clone = w.clone();
     let y_hat = x.matmul(w);
     let diff = y - y_hat;
     let loss = (diff.clone() * diff.clone()).reduce_sum();
 
     let traced_model = Model::new(x_clone.clone(), y_clone, loss.clone());
+    let mut opt = GradientDescent { lr: 0.01 };
 
-    println!("Loss 1: {:?}", loss);
-    traced_model.recompute(vec![1.3; 12], vec![3.1; 28]);
+    for i in 1..10 {
+        traced_model.recompute(vec![1.3; 12], vec![3.1; 28]);
+        println!("Loss {}: {:?}", i, loss);
+        loss.backward();
+        w_clone.consume_grad(&mut opt);
+    }
+
     // x_clone.replace_data_with(vec![-1.0; 12]);
     // loss.recompute();
-    println!("Loss 2: {:?}", loss);
 
     let mut parameters = loss.leaves();
     remove_inputs(&mut parameters, &in_ids);
