@@ -8,3 +8,5 @@ edition = "2021"
 [dependencies]
 num = "0.4.1"
 once_cell = "1.19.0"
+rand = "0.8.5"
+statrs = "0.16.0"

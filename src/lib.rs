@@ -6,6 +6,7 @@ pub mod dtype;
 pub mod module;
 pub mod ops;
 pub mod optim;
+pub mod random;
 pub mod reshape;
 pub mod shape;
 pub mod tensor;

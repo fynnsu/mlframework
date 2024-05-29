@@ -1,8 +1,8 @@
 #![allow(incomplete_features)]
 #![feature(generic_const_exprs)]
 use mlframework::{
-    build_mod, change_dtype::Converts, optim::GradientDescent, reshape::Reshapes, s, t,
-    tensor::remove_inputs, Tensor,
+    build_mod, change_dtype::Converts, optim::GradientDescent, random::randn, reshape::Reshapes, s,
+    t, tensor::remove_inputs, Tensor,
 };
 
 fn shapes() {
@@ -50,6 +50,10 @@ fn prepare_for_training() {
     for p in parameters {
         println!("Param({:?}, grad={})", p, p.tensor.grad_to_string());
     }
+
+    let rng = rand::thread_rng();
+    let r: Tensor<_, s!(3, 5, 1)> = randn(1.0, 1.0, rng);
+    println!("Random Tensor {:?}", r);
 }
 
 fn main() {
