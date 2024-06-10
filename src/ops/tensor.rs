@@ -91,6 +91,9 @@ pub struct ElMinStruct<T: Dtype, S: Shape>(Tensor<T, S>, Tensor<T, S>);
 pub struct ElReLUStruct<T: Dtype, S: Shape>(Tensor<T, S>);
 
 #[derive(Debug)]
+pub struct DetachStruct<T: Dtype, S: Shape>(Tensor<T, S>);
+
+#[derive(Debug)]
 pub struct ReduceSumStruct<T: Dtype, S: Shape>(Tensor<T, S>);
 
 #[derive(Debug)]
@@ -201,6 +204,31 @@ impl<const N: usize, const M: usize, const O: usize, T: Dtype> Op
             TensorBox::new(self.0.id, &self.0),
             TensorBox::new(self.1.id, &self.1),
         ]
+    }
+}
+
+// Detach
+impl<T: Dtype, S: Shape> Op for DetachStruct<T, S> {
+    type Produces = Tensor<T, S>;
+
+    fn propogate_grad(&self, _t: &Self::Produces) {
+        // t = a.detach()
+        // Don't propogate grad
+    }
+
+    fn recompute(&self, t: &Self::Produces) {
+        let data = self.0.borrow_value().clone();
+        t.data.replace(data)
+    }
+
+    fn forward(self) -> Self::Produces {
+        let value = self.0.borrow_value().clone();
+        let data = TensorData::new(value, false);
+        unsafe { Self::Produces::from_rc_td_and_op_unchecked(data, Rc::new(self)) }
+    }
+
+    fn operands(&self) -> Vec<TensorBox> {
+        vec![TensorBox::new(self.0.id, &self.0)]
     }
 }
 
