@@ -1,10 +1,52 @@
 #![allow(incomplete_features)]
 #![feature(generic_const_exprs)]
 use mlframework::{
-    build_mod, change_dtype::Converts, optim::GradientDescent, random::randn, reshape::Reshapes, s,
-    t, tensor::remove_inputs, Tensor,
+    build_mod,
+    change_dtype::Converts,
+    optim::GradientDescent,
+    random::randn,
+    reshape::Reshapes,
+    s, t,
+    tensor::{remove_inputs, TensorTrait},
+    Tensor,
 };
 
+fn main() {
+    simple_computation();
+
+    type_conversion();
+
+    shapes();
+
+    simple_training();
+}
+
+fn simple_computation() {
+    let x = Tensor::new([2.0; 3]);
+    let y = Tensor::new_with_grad([1., -2., 1.]);
+    let y_cloned = y.clone();
+    let z = Tensor::new_with_grad(vec![-3., 1., 3.]);
+    let z_cloned = z.clone();
+
+    let x_plus_yy = x + y.clone() + y;
+    println!("x_plus_yy = {:?}", x_plus_yy);
+    let zrelu = z.relu();
+    println!("zrelu = {:?}", zrelu);
+    let mul = x_plus_yy * zrelu;
+    println!("mul = {:?}", mul);
+
+    let s = mul.reduce_sum();
+    println!("((x + y + y) * z.relu()).reduce_sum() = {:?}", s);
+
+    s.backward();
+    println!("z_grad = {:?}", z_cloned.grad_to_string());
+}
+
+fn type_conversion() {
+    let s: Tensor<f64, _> = Tensor::new([2.0; 3]);
+    let s2: Tensor<i32, _> = s.convert();
+    println!("{:?}", s2);
+}
 fn shapes() {
     let x = Tensor::new([[4; 6]; 8]);
     let x: Tensor<_, s!(48)> = x.reshape();
@@ -17,7 +59,7 @@ fn shapes() {
 
 build_mod! {Model inputs=[x: t!(f64, (4, 3)), y: t!(f64, (4,7))], outputs=[loss: t!(f64, (1))]}
 
-fn prepare_for_training() {
+fn simple_training() {
     let x = Tensor::new([[1.0; 3]; 4]);
     let x_clone = x.clone();
     let y = Tensor::new([[3.0; 7]; 4]);
@@ -54,60 +96,4 @@ fn prepare_for_training() {
     let rng = rand::thread_rng();
     let r: Tensor<_, s!(3, 5, 1)> = randn(1.0, 1.0, rng);
     println!("Random Tensor {:?}", r);
-}
-
-fn main() {
-    let x = Tensor::new([2.0; 3]);
-    let x_cloned = x.clone();
-    let y = Tensor::new_with_grad([1., -2., 1.]);
-    let z = Tensor::new_with_grad(vec![-3., 1., 3.]);
-    let xxy = x + y.clone() + y;
-    println!("xxy = {:?}", xxy);
-    let zrelu = z.relu();
-    println!("zrelu = {:?}", zrelu);
-    let mul = xxy * zrelu;
-    println!("mul = {:?}", mul);
-
-    let s = mul.reduce_sum();
-    println!("((x + y + y) * z.relu()).reduce_sum() = {:?}", s);
-
-    s.backward();
-
-    println!("\n x_cloned = {:?}", x_cloned);
-
-    let s: Tensor<f64, _> = Tensor::new([2.0; 3]);
-    let s2: Tensor<i32, _> = s.convert();
-    println!("{:?}", s2);
-    shapes();
-
-    prepare_for_training();
-
-    //0 x = (3, 4, 5)
-    //1 y = (1, -2, 1)
-    //2 z = (-3, 1, 3)
-    //3 x + y = (4, 2, 6)
-    //4 x + y + y = (5, 0, 7)
-    //5 zeros_like(z) = (0, 0, 0)
-    //6 z.relu() = z.max(zeros_like(z)) = (0, 1, 3)
-    //7 s = (0, 0, 21)
-    // s.reduce_sum() = (x + y + y) * z.relu()
-    // println!("s = {:?}", s);
-    // println!("s.traversal_ordering() {:?}", s.traversal_ordering());
-    // println!("s.id_to_tensor_ref() {:?}", s.build_graph());
-
-    // let graph = s.build_graph();
-    // println!("graph {:?}", graph);
-
-    // let ordering_map = s.traversal_ordering();
-    // let mut ordering_vec: Vec<_> = ordering_map.iter().collect();
-    // ordering_vec.sort_by(|a, b| a.1.cmp(b.1));
-    // println!("ordering_vec {:?}", ordering_vec);
-
-    // println!();
-    // println!();
-    // let grad = s.grad();
-    // for (t_id, g) in grad.iter() {
-    //     println!("Tensor {:?}, grad {:?}", graph.nodes.get(t_id), g)
-    // }
-    // println!("grad {:?}", grad);
 }
