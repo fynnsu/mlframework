@@ -22,6 +22,7 @@ fn main() {
 }
 
 fn simple_computation() {
+    println!("##### Simple Computation #####");
     let x = Tensor::new([2.0; 3]);
     let y = Tensor::new_with_grad([1., -2., 1.]);
     let y_cloned = y.clone();
@@ -39,13 +40,20 @@ fn simple_computation() {
     println!("((x + y + y) * z.relu()).reduce_sum() = {:?}", s);
 
     s.backward();
+
+    // sum[(x + y + y) * z.relu())
+    // sum[([2, 2, 2] + [1, -2, 1] + [1, -2, 1]) * [-3, 1, 3].relu()]
     println!("z_grad = {:?}", z_cloned.grad_to_string());
+    println!("y_grad = {:?}", y_cloned.grad_to_string());
+    println!("##############################\n\n");
 }
 
 fn type_conversion() {
+    println!("##### Type Conversion #####");
     let s: Tensor<f64, _> = Tensor::new([2.0; 3]);
-    let s2: Tensor<i32, _> = s.convert();
-    println!("{:?}", s2);
+    let s2: Tensor<i32, _> = s.clone().convert();
+    println!("{:?} -> {:?}", s, s2);
+    println!("###########################\n\n");
 }
 fn shapes() {
     let x = Tensor::new([[4; 6]; 8]);
@@ -54,17 +62,19 @@ fn shapes() {
     let x: Tensor<_, s!(12, 4)> = x.reshape();
     let y = Tensor::new([[1; 7]; 4]);
     let m: t!(i32, (12, 7)) = x.matmul(y);
-    println!("m = {:?}", m);
 }
 
 build_mod! {Model inputs=[x: t!(f64, (4, 3)), y: t!(f64, (4,7))], outputs=[loss: t!(f64, (1))]}
 
 fn simple_training() {
+    println!("##### Simple Training #####");
     let x = Tensor::new([[1.0; 3]; 4]);
     let x_clone = x.clone();
-    let y = Tensor::new([[3.0; 7]; 4]);
+
+    let rng = rand::thread_rng();
+    let y: Tensor<f64, s!(4, 7)> = randn(1.0, 1.0, rng);
+    println!("Random Tensor {:?}", y);
     let y_clone = y.clone();
-    let in_ids = [x.id, y.id];
 
     let w = Tensor::new_with_grad([[0.5; 7]; 3]);
     let w_clone = w.clone();
@@ -81,19 +91,5 @@ fn simple_training() {
         loss.backward();
         w_clone.consume_grad(&mut opt);
     }
-
-    // x_clone.replace_data_with(vec![-1.0; 12]);
-    // loss.recompute();
-
-    let mut parameters = loss.leaves();
-    remove_inputs(&mut parameters, &in_ids);
-    loss.backward();
-
-    for p in parameters {
-        println!("Param({:?}, grad={})", p, p.tensor.grad_to_string());
-    }
-
-    let rng = rand::thread_rng();
-    let r: Tensor<_, s!(3, 5, 1)> = randn(1.0, 1.0, rng);
-    println!("Random Tensor {:?}", r);
+    println!("###########################");
 }

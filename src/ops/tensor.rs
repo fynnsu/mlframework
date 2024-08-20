@@ -28,7 +28,7 @@ macro_rules! impl_bin_el_op {
                 if let Some(d_dt) = t.data.grad_ref().as_ref() {
                     let (d_da, d_db) = {
                         let a = self.0.borrow_value();
-                        let b = self.0.borrow_value();
+                        let b = self.1.borrow_value();
                         let (dt_da, dt_db) = $df(&a, &b);
                         (el_mul(d_dt, &dt_da), el_mul(d_dt, &dt_db))
                     };
